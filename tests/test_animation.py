@@ -1,5 +1,5 @@
-from catpet.animation import Animator
-from catpet.sprites import AnimationSpec
+from katzenmaster.animation import Animator
+from katzenmaster.sprites import AnimationSpec
 
 LOOP = AnimationSpec("walk", 0, 6, 10.0, True)
 ONCE = AnimationSpec("blink", 1, 4, 12.0, False)

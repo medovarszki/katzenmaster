@@ -20,12 +20,12 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            artifact: catpet-windows-x86_64
-            file: dist/catpet-windows-x86_64.exe
+            artifact: katzenmaster-windows-x86_64
+            file: dist/katzenmaster-windows-x86_64.exe
           # oldest supported runner -> oldest glibc -> runs on the most distributions
           - os: ubuntu-22.04
-            artifact: catpet-linux-x86_64
-            file: dist/catpet-linux-x86_64.tar.gz
+            artifact: katzenmaster-linux-x86_64
+            file: dist/katzenmaster-linux-x86_64.tar.gz
     runs-on: ${{ matrix.os }}
     env:
       QT_QPA_PLATFORM: offscreen

@@ -5,11 +5,11 @@ from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QImage
 from PySide6.QtWidgets import QSystemTrayIcon
 
-from catpet import config
-from catpet.app import create_cat, warn_about_platform
-from catpet.brain import LEFT, RIGHT, State
-from catpet.tray import QUIT_TEXT, CatTray
-from catpet.window import WINDOW_ATTRIBUTES, CatWindow
+from katzenmaster import config
+from katzenmaster.app import create_cat, warn_about_platform
+from katzenmaster.brain import LEFT, RIGHT, State
+from katzenmaster.tray import QUIT_TEXT, CatTray
+from katzenmaster.window import WINDOW_ATTRIBUTES, CatWindow
 
 
 @pytest.fixture

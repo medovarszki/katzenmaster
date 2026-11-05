@@ -1,4 +1,4 @@
-"""Entry point: ``python -m catpet`` (or ``python -m catpet --snapshot``)."""
+"""Entry point: ``python -m katzenmaster`` (or ``python -m katzenmaster --snapshot``)."""
 
 from __future__ import annotations
 
@@ -14,18 +14,18 @@ def _ensure_std_streams() -> Path | None:
     """A windowed (no console) executable has ``sys.stdout``/``sys.stderr`` set to None.
 
     Then ``print`` would crash and log messages would vanish: send output to devnull and
-    return a log file path (``<temp>/catpet.log``) instead.
+    return a log file path (``<temp>/katzenmaster.log``) instead.
     """
     if sys.stdout is not None and sys.stderr is not None:
         return None
     devnull = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115 - lives for the process
     sys.stdout = sys.stdout or devnull
     sys.stderr = sys.stderr or devnull
-    return Path(tempfile.gettempdir()) / "catpet.log"
+    return Path(tempfile.gettempdir()) / "katzenmaster.log"
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="catpet", description="A pixel-art cat living on your screen.")
+    parser = argparse.ArgumentParser(prog="katzenmaster", description="A pixel-art cat living on your screen.")
     parser.add_argument("--snapshot", action="store_true",
                         help="render every state headless (offscreen) into PNG files and exit")
     parser.add_argument("--out", type=Path, default=Path("out"), help="output folder for --snapshot")

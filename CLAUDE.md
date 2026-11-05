@@ -6,11 +6,11 @@
 - Commit csak zöld tesztekkel (`pytest -q`).
 
 ## Projekt
-- Python 3.11+, egyetlen futásidejű függőség a PySide6. Indítás: `python -m catpet`.
+- Python 3.11+, egyetlen futásidejű függőség a PySide6. Indítás: `python -m katzenmaster`.
 - Tesztek: `pytest -q` (headless, `QT_QPA_PLATFORM=offscreen`).
-- Vizuális ellenőrzés: `python -m catpet --snapshot` → `out/` (a képeket meg is kell nézni).
+- Vizuális ellenőrzés: `python -m katzenmaster --snapshot` → `out/` (a képeket meg is kell nézni).
 - GUI nélküli logika (`brain.py`, `animation.py`, `sprites.py`) maradjon külön a widgettől.
-- Minden hangolható érték a `catpet/config.py`-ban van.
+- Minden hangolható érték a `katzenmaster/config.py`-ban van.
 - Futtatható állomány: `python packaging/build.py` (lásd README, „Futtatható állomány”).
 - Haladási napló: `PROGRESS.md`; kézi ellenőrzések: `MANUAL_CHECKS.md`.
 - Dokumentáció magyarul, kód és kódkommentek angolul.

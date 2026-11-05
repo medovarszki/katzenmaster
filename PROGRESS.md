@@ -20,7 +20,7 @@
 - [x] `sit` → `walk` jobbra/balra véletlen távolságra → `sit`
 - [x] Hosszabb tétlenség után `sleep`, alvás végén `sit`
 - [x] Szélen megfordul, sosem lóg ki
-- [x] Időzítések véletlenszerűek, de konstansokban állíthatók (`catpet/config.py`)
+- [x] Időzítések véletlenszerűek, de konstansokban állíthatók (`katzenmaster/config.py`)
 - [x] `walk` jobbra néz, balra tükrözve rajzolódik
 
 ### 4. Reakció a kurzorra (`QCursor.pos()`)
@@ -38,18 +38,18 @@
 - [x] Wayland: README leírja a korlátokat
 
 ### Infrastruktúra / ellenőrzés
-- [x] Csomagszerkezet: `catpet/`, `tests/`, `assets/sprites/`, `pyproject.toml`
+- [x] Csomagszerkezet: `katzenmaster/`, `tests/`, `assets/sprites/`, `pyproject.toml`
 - [x] Sprite-betöltés, nearest-neighbor nagyítás (3x, konstans), tükrözés – GUI nélkül tesztelve
 - [x] Animáció-időzítés tesztelve
-- [x] `python -m catpet` indítás
-- [x] `python -m catpet --snapshot` → PNG-k az `out/` mappába (átlátszó + színes háttérre kompozitált)
+- [x] `python -m katzenmaster` indítás
+- [x] `python -m katzenmaster --snapshot` → PNG-k az `out/` mappába (átlátszó + színes háttérre kompozitált)
 - [x] Snapshot képek szemrevételezve
 - [x] README (telepítés, indítás, ismert korlátok)
 - [x] MANUAL_CHECKS.md (Windows + Linux külön)
 
 ### 7. Futtatható állomány (második kör)
-- [x] Egyfájlos build PyInstallerrel: `packaging/build.py` + `packaging/catpet.spec`
-- [x] Fagyasztott futás: assetek a bundle-ből (`config.assets_dir()`); konzol nélküli módban a napló `%TEMP%/catpet.log`-ba megy
+- [x] Egyfájlos build PyInstallerrel: `packaging/build.py` + `packaging/katzenmaster.spec`
+- [x] Fagyasztott futás: assetek a bundle-ből (`config.assets_dir()`); konzol nélküli módban a napló `%TEMP%/katzenmaster.log`-ba megy
 - [x] Linux bináris helyben buildelve, smoke test (offscreen), valódi X11 (Xvfb) és Wayland (weston) alatt futtatva
 - [x] GitHub Actions: tesztek és build Windowson és Linuxon, artifactok, `v*` tagre Release
 - [x] Windows `.exe` a CI-on lebuildelve és smoke testelve
@@ -65,4 +65,5 @@
 - **#4** Tálcaikon: 32/64/96 px-es nearest-neighbor változatok egy `QIcon`-ban (a 96 px-es kép rendszer általi kicsinyítése elmosódhatott). `SpriteSheet.frame()` kapott egy opcionális `scale` paramétert. Wayland próba valódi kompozitoron (weston `--backend=headless`, `QT_QPA_PLATFORM=wayland`): figyelmeztetés a logban, fut, SIGINT-re exit 0. 71 teszt zöld.
 - **#5** `README.md` (telepítés, indítás, kapcsolók, konfiguráció, felépítés, platformkorlátok: Wayland, X11 kompozitor, GNOME tray, HiDPI) és `MANUAL_CHECKS.md` (Windows W1–W13, Linux X11 L1–L12, Wayland WL1–WL4). `pip install -e .[dev]` venv-ben ellenőrizve, másik munkakönyvtárból is megtalálja az asseteket. Végső kör: 71 teszt zöld, friss snapshot rendben. Minden kritérium kipipálva.
 - **#6** Munka a `main` ágon (`CLAUDE.md`). Futtatható állomány PyInstallerrel. A PyInstaller nem tud keresztfordítani, ezért a Windows-build a GitHub Actions `windows-latest` runnerén készül. Az első Linux-build 75 MB lett, mert a PySide6 hookjai behúzták a virtuális billentyűzet (QtQuick/QML), a PDF és a Lottie képformátum, valamint a GTK3-téma pluginjait. Ezeket a `.spec` kiszűri, így 57 MB lett. A `libcrypto`/`libssl` és a `Qt6OpenGL` szándékosan bent maradt (Python `_hashlib`/`_ssl`, illetve az xcb plugin használhatja). A kész bináris Xvfb alatt `UTILITY`/`ABOVE` tulajdonságú, üres input shape-pel; weston alatt figyelmeztet és fut; plugin-betöltési hiba nincs (`QT_DEBUG_PLUGINS=1`). 76 teszt zöld.
-- **#7** Első CI-futás (`build` #1) zöld mindkét platformon. Windows: a tesztek lefutottak, `catpet-windows-x86_64.exe` 37 MB, a smoke testben 37 PNG készült. Linux (ubuntu-22.04): tesztek és build zöld. Mindkettő letölthető artifactként.
+- **#7** Első CI-futás (`build` #1) zöld mindkét platformon. Windows: a tesztek lefutottak, `katzenmaster-windows-x86_64.exe` 37 MB, a smoke testben 37 PNG készült. Linux (ubuntu-22.04): tesztek és build zöld. Mindkettő letölthető artifactként.
+- **#8** Átnevezés: a projekt neve mindenhol `katzenmaster`. Érintett: a csomag (`katzenmaster/`, `python -m katzenmaster`), a `pyproject.toml`, az ablakcím, a tálcaikon felirata, a naplófájl (`%TEMP%/katzenmaster.log`), a `.spec`, az exe és a CI-artifactok (`katzenmaster-windows-x86_64.exe`, `katzenmaster-linux-x86_64.tar.gz`), valamint a dokumentáció. 76 teszt zöld, a snapshot változatlan, a helyi Linux-build és a smoke test rendben.

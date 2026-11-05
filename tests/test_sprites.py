@@ -1,8 +1,8 @@
 import pytest
 from PySide6.QtGui import QImage
 
-from catpet import config
-from catpet.sprites import SpriteSheet, frame_rect, parse_meta
+from katzenmaster import config
+from katzenmaster.sprites import SpriteSheet, frame_rect, parse_meta
 
 REQUIRED = {"sit", "blink", "sleep", "walk"}
 

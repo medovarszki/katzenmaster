@@ -1,4 +1,4 @@
-"""Headless rendering of every state into PNG files (``python -m catpet --snapshot``).
+"""Headless rendering of every state into PNG files (``python -m katzenmaster --snapshot``).
 
 Output (in ``out/`` by default):
 

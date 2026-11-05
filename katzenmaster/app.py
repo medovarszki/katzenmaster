@@ -44,7 +44,7 @@ def warn_about_platform(platform: str) -> None:
 
 def get_app() -> QApplication:
     app = QApplication.instance() or QApplication(sys.argv[:1])
-    app.setApplicationName("catpet")
+    app.setApplicationName("katzenmaster")
     app.setQuitOnLastWindowClosed(False)  # the window is a Tool window; quit via tray only
     return app
 
@@ -60,5 +60,5 @@ def run() -> int:
     cat.start()
     # Ctrl+C in the terminal also quits (the 30 fps timer lets Python handle the signal)
     signal.signal(signal.SIGINT, lambda *_: app.quit())
-    log.info("catpet running on platform %r", app.platformName())
+    log.info("katzenmaster running on platform %r", app.platformName())
     return app.exec()

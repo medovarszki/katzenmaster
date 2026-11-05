@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "catpet"
+name = "katzenmaster"
 version = "0.1.0"
 description = "A tiny pixel-art cat that lives at the bottom of your screen."
 readme = "README.md"
@@ -15,7 +15,7 @@ dev = ["pytest>=7"]
 build = ["pyinstaller>=6.10"]
 
 [tool.setuptools]
-packages = ["catpet"]
+packages = ["katzenmaster"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

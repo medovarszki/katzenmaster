@@ -13,27 +13,27 @@ valódi asztal, tálca és ablakkezelő. Az automatikusan ellenőrzött részek:
 Minden pont előtt indítsd el az alkalmazást a projekt mappájából:
 
 ```bash
-python -m catpet -v
+python -m katzenmaster -v
 ```
 
 A `-v` miatt a terminálban látszik a napló is.
 
-Gyorsabb teszteléshez a `catpet/config.py`-ban ideiglenesen csökkentheted az
+Gyorsabb teszteléshez a `katzenmaster/config.py`-ban ideiglenesen csökkentheted az
 időzítéseket, például `SLEEP_AFTER = (10.0, 15.0)`. Utána állítsd vissza.
 
 ---
 
 ## Windows 10/11
 
-### Exe (a GitHub Actions `catpet-windows-x86_64` artifactjából)
+### Exe (a GitHub Actions `katzenmaster-windows-x86_64` artifactjából)
 
 | # | Lépés | Elvárt eredmény |
 |---|---|---|
-| E1 | Csomagold ki a zipet, és indítsd el dupla kattintással a `catpet-windows-x86_64.exe` fájlt. | Ha megjelenik a SmartScreen ablak: **További információ → Futtatás mindenképp**. Pár másodperc múlva megjelenik a macska. **Nem** nyílik konzolablak. |
+| E1 | Csomagold ki a zipet, és indítsd el dupla kattintással a `katzenmaster-windows-x86_64.exe` fájlt. | Ha megjelenik a SmartScreen ablak: **További információ → Futtatás mindenképp**. Pár másodperc múlva megjelenik a macska. **Nem** nyílik konzolablak. |
 | E2 | Nézd meg az exe ikonját az Intézőben. | A pixeles ülő macska látszik, nem az alapértelmezett Python- vagy PyInstaller-ikon. |
-| E3 | Nyisd meg a `%TEMP%\catpet.log` fájlt (Win+R → `%TEMP%`). | Benne van az `available geometry ...` és a `catpet running on platform 'windows'` sor. |
+| E3 | Nyisd meg a `%TEMP%\katzenmaster.log` fájlt (Win+R → `%TEMP%`). | Benne van az `available geometry ...` és a `katzenmaster running on platform 'windows'` sor. |
 | E4 | Végezd el a W1–W13 pontokat az exével. | Ugyanaz az eredmény, mint forrásból futtatva. |
-| E5 | Lépj ki a tálcamenüből, majd nézd meg a Feladatkezelőt. | Nem marad futó `catpet` folyamat. |
+| E5 | Lépj ki a tálcamenüből, majd nézd meg a Feladatkezelőt. | Nem marad futó `katzenmaster` folyamat. |
 
 ### Forrásból vagy exével
 
@@ -55,14 +55,14 @@ időzítéseket, például `SLEEP_AFTER = (10.0, 15.0)`. Utána állítsd vissza
 
 ## Linux, X11 (például Ubuntu Xorg munkamenet, KDE X11, XFCE, Cinnamon)
 
-A bináris (a GitHub Actions `catpet-linux-x86_64` artifactjából) így indítható:
+A bináris (a GitHub Actions `katzenmaster-linux-x86_64` artifactjából) így indítható:
 
 ```bash
-tar xzf catpet-linux-x86_64.tar.gz
+tar xzf katzenmaster-linux-x86_64.tar.gz
 ```
 
 ```bash
-./catpet-linux-x86_64/catpet -v
+./katzenmaster-linux-x86_64/katzenmaster -v
 ```
 
 Ha `could not load the Qt platform plugin "xcb"` hibát kapsz, jegyezd fel a
@@ -83,14 +83,14 @@ Ennek `x11`-et kell kiírnia.
 | L2 | Nézd meg a macska körüli területet. | Nincs fekete négyzet a macska körül. Ha van, akkor nem fut kompozitor: XFCE-n kapcsold be a Beállítások → Ablakkezelő finomhangolása → Kompozitor lehetőséget, i3/Openbox alatt indíts el egy kompozitort (például `picom`), és indítsd újra az alkalmazást. |
 | L3 | Kattints a macskára, majd az alatta lévő ikonra vagy ablakra. | A kattintás átmegy. A macska nem kap fókuszt. |
 | L4 | Maximalizálj egy ablakot, és kattints bele. | A macska fölötte marad (mindig felül). |
-| L5 | Nézd meg a panelt vagy tálcát, nyomj Alt-Tab billentyűt, és nézd meg a munkaterület-váltót is. | A macska nem szerepel a tálcán és az Alt-Tab listában. Ha mégis szerepel, ellenőrizd: `xprop` → kattints a macskára (az átkattintás miatt nehéz lehet; inkább: `xwininfo -root -tree \| grep catpet`, majd `xprop -id <ID> _NET_WM_WINDOW_TYPE _NET_WM_STATE`), és jegyezd fel az asztali környezet nevét. |
+| L5 | Nézd meg a panelt vagy tálcát, nyomj Alt-Tab billentyűt, és nézd meg a munkaterület-váltót is. | A macska nem szerepel a tálcán és az Alt-Tab listában. Ha mégis szerepel, ellenőrizd: `xprop` → kattints a macskára (az átkattintás miatt nehéz lehet; inkább: `xwininfo -root -tree \| grep katzenmaster`, majd `xprop -id <ID> _NET_WM_WINDOW_TYPE _NET_WM_STATE`), és jegyezd fel az asztali környezet nevét. |
 | L6 | Keresd meg a tálcaikont. GNOME alatt ehhez az *AppIndicator* bővítmény kell. | A macska ikonja ott van. A jobb gombos menüben egyetlen pont van: **Kilépés**. Ha nincs tálca, a naplóban `no system tray available` figyelmeztetés látszik, és az alkalmazás fut tovább. |
 | L7 | Válaszd a **Kilépés** pontot. A második körben terminálból Ctrl+C-vel lépj ki. | Mindkét esetben tiszta kilépés (exit 0). |
 | L8 | Figyeld 2–3 percig. | Ugyanaz, mint a W8 pontban. |
 | L9 | Az alvó macska fölé vidd a kurzort. | Felébred és leül. |
 | L10 | Várj kb. 5 másodpercet, majd vidd a kurzort 100–150 px-re a macska mellé. | Odasétál a kurzor alá, és leül. |
 | L11 | Méretezd át vagy helyezd át a panelt, vagy kapcsold be az automatikus elrejtését. | A macska követi az új alsó szélt. |
-| L12 | HiDPI esetén (például `QT_SCALE_FACTOR=2 python -m catpet`) | A pixelek élesek, a macska a panel fölött áll. |
+| L12 | HiDPI esetén (például `QT_SCALE_FACTOR=2 python -m katzenmaster`) | A pixelek élesek, a macska a panel fölött áll. |
 
 ## Linux, Wayland (GNOME, KDE Plasma Wayland)
 
@@ -98,7 +98,7 @@ Itt csak az elvárt, dokumentált korlátokat kell megerősíteni.
 
 | # | Lépés | Elvárt eredmény |
 |---|---|---|
-| WL1 | Indítsd el: `python -m catpet -v` | A naplóban látszik a `running on Wayland: ...` figyelmeztetés. Az alkalmazás **nem omlik össze**. |
+| WL1 | Indítsd el: `python -m katzenmaster -v` | A naplóban látszik a `running on Wayland: ...` figyelmeztetés. Az alkalmazás **nem omlik össze**. |
 | WL2 | Figyeld meg az ablakot. | Az animáció fut. A pozíció, a „mindig felül” viselkedés és a kurzorreakció valószínűleg **nem** működik (lásd README). Ez elfogadott. |
-| WL3 | Indítsd XWaylanddel: `QT_QPA_PLATFORM=xcb python -m catpet -v` | Az L1–L11 pontok többsége teljesül. Jegyezd fel, melyik nem. |
+| WL3 | Indítsd XWaylanddel: `QT_QPA_PLATFORM=xcb python -m katzenmaster -v` | Az L1–L11 pontok többsége teljesül. Jegyezd fel, melyik nem. |
 | WL4 | Lépj ki a tálcamenüből vagy Ctrl+C-vel. | Tiszta kilépés. |

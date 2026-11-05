@@ -1,4 +1,4 @@
-# catpet
+# katzenmaster
 
 Egy pixel art macska, aki a képernyő alján él. Ül, néha pislog, sétál a képernyő
 egyik szélétől a másikig, és ha sokáig nem foglalkoznak vele, elalszik. Ha a kurzor
@@ -48,7 +48,7 @@ sudo apt install libxcb-cursor0 libxkbcommon-x11-0 libegl1
 ## Indítás
 
 ```bash
-python -m catpet
+python -m katzenmaster
 ```
 
 Kilépés: a tálcaikon jobb gombos menüjében a **Kilépés**, vagy ha terminálból
@@ -82,8 +82,8 @@ platformra elkészíti a programot:
 
 1. GitHub → **Actions** → **build** → a legutóbbi zöld futás.
 2. Lent, az **Artifacts** részben:
-   - `catpet-windows-x86_64`: egy zip, benne a `catpet-windows-x86_64.exe`;
-   - `catpet-linux-x86_64`: egy zip, benne a `catpet-linux-x86_64.tar.gz`.
+   - `katzenmaster-windows-x86_64`: egy zip, benne a `katzenmaster-windows-x86_64.exe`;
+   - `katzenmaster-linux-x86_64`: egy zip, benne a `katzenmaster-linux-x86_64.tar.gz`.
 
 Ha `v`-vel kezdődő taget pusholsz, a workflow GitHub Release-t is készít, és a két
 fájl ott is letölthető lesz:
@@ -112,29 +112,29 @@ python packaging/build.py
 A build lépései:
 
 1. ikon a sprite-ból;
-2. PyInstaller a `packaging/catpet.spec` alapján: egy fájl, konzolablak nélkül, a
+2. PyInstaller a `packaging/katzenmaster.spec` alapján: egy fájl, konzolablak nélkül, a
    nem használt Qt-részek (Quick/QML, PDF, hálózat, GTK-téma) nélkül;
 3. smoke test: a kész fájl `--snapshot` módban lerenderel minden állapotot;
-4. a kimenet a `dist/` mappába kerül: `catpet-windows-x86_64.exe` vagy
-   `catpet-linux-x86_64.tar.gz`.
+4. a kimenet a `dist/` mappába kerül: `katzenmaster-windows-x86_64.exe` vagy
+   `katzenmaster-linux-x86_64.tar.gz`.
 
 ### Használat
 
-**Windows:** dupla kattintás a `catpet-windows-x86_64.exe` fájlra. Az exe nincs
+**Windows:** dupla kattintás a `katzenmaster-windows-x86_64.exe` fájlra. Az exe nincs
 digitálisan aláírva, ezért a SmartScreen első indításkor figyelmeztethet: **További
 információ → Futtatás mindenképp**. Egyes vírusirtók gyanúsnak jelölhetik az
 egyfájlos PyInstaller-programokat; ez téves riasztás. Indításkor a program néhány
 másodpercig kicsomagolja magát egy ideiglenes mappába, ezért a macska kis késéssel
-jelenik meg. Mivel nincs konzolablak, a napló ide kerül: `%TEMP%\catpet.log`.
+jelenik meg. Mivel nincs konzolablak, a napló ide kerül: `%TEMP%\katzenmaster.log`.
 
 **Linux:**
 
 ```bash
-tar xzf catpet-linux-x86_64.tar.gz
+tar xzf katzenmaster-linux-x86_64.tar.gz
 ```
 
 ```bash
-./catpet-linux-x86_64/catpet
+./katzenmaster-linux-x86_64/katzenmaster
 ```
 
 Terminálból indítva a napló a terminálban jelenik meg. Ubuntu 22.04-en készül, ezért
@@ -152,7 +152,7 @@ A tesztek képernyő nélkül futnak (`QT_QPA_PLATFORM=offscreen`).
 
 ## Testreszabás
 
-Minden időzítés és méret a `catpet/config.py` fájlban van:
+Minden időzítés és méret a `katzenmaster/config.py` fájlban van:
 
 - `SCALE`: egész szorzó, nearest-neighbor nagyítással (alapértelmezés 3, vagyis 96 px)
 - `SIT_ACTION_INTERVAL`, `WALK_PROBABILITY`, `BLINK_INTERVAL`: ülés, séta, pislogás
@@ -166,15 +166,15 @@ A sprite sheet az `assets/sprites/generate_sprites.py` futtatásával generálha
 
 | Fájl | Tartalom |
 |---|---|
-| `catpet/config.py` | Konstansok |
-| `catpet/sprites.py` | `sprites.json` értelmezése; `SpriteSheet`: vágás, nearest-neighbor nagyítás, tükrözés (csak `QImage`) |
-| `catpet/animation.py` | Képkocka-időzítés, ismétlődő és egyszer lefutó animációk (tiszta Python) |
-| `catpet/brain.py` | Állapotgép (`SIT`, `BLINK`, `WALK`, `SLEEP`, `CHASE`), szélek kezelése, kurzorreakció, talajpozíció (tiszta Python) |
-| `catpet/window.py` | Átlátszó, átkattintható, mindig felül lévő ablak |
-| `catpet/tray.py` | Tálcaikon |
-| `catpet/app.py` | Az elemek összekötése |
-| `catpet/snapshot.py` | A `--snapshot` mód |
-| `packaging/build.py`, `packaging/catpet.spec` | Futtatható állomány készítése (PyInstaller) |
+| `katzenmaster/config.py` | Konstansok |
+| `katzenmaster/sprites.py` | `sprites.json` értelmezése; `SpriteSheet`: vágás, nearest-neighbor nagyítás, tükrözés (csak `QImage`) |
+| `katzenmaster/animation.py` | Képkocka-időzítés, ismétlődő és egyszer lefutó animációk (tiszta Python) |
+| `katzenmaster/brain.py` | Állapotgép (`SIT`, `BLINK`, `WALK`, `SLEEP`, `CHASE`), szélek kezelése, kurzorreakció, talajpozíció (tiszta Python) |
+| `katzenmaster/window.py` | Átlátszó, átkattintható, mindig felül lévő ablak |
+| `katzenmaster/tray.py` | Tálcaikon |
+| `katzenmaster/app.py` | Az elemek összekötése |
+| `katzenmaster/snapshot.py` | A `--snapshot` mód |
+| `packaging/build.py`, `packaging/katzenmaster.spec` | Futtatható állomány készítése (PyInstaller) |
 | `.github/workflows/build.yml` | CI: tesztek és build Windowsra és Linuxra, release tagre |
 
 ## Platformok és ismert korlátok
@@ -207,7 +207,7 @@ Ajánlott megkerülés: indítsd XWaylanddel (X11 módban), ott a fentiek többn
 működnek:
 
 ```bash
-QT_QPA_PLATFORM=xcb python -m catpet
+QT_QPA_PLATFORM=xcb python -m katzenmaster
 ```
 
 **Tálcaikon:** GNOME alatt a tálcaikonhoz az *AppIndicator and KStatusNotifierItem

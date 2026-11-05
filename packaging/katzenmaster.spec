@@ -1,4 +1,4 @@
-# PyInstaller spec for catpet -- run through packaging/build.py, not directly.
+# PyInstaller spec for katzenmaster -- run through packaging/build.py, not directly.
 # -*- mode: python -*-
 import os
 import re
@@ -6,7 +6,7 @@ import sys
 
 ROOT = os.path.abspath(os.path.join(SPECPATH, ".."))  # noqa: F821 - SPECPATH is injected by PyInstaller
 SPRITES = os.path.join(ROOT, "assets", "sprites")
-ICON = os.environ.get("CATPET_ICON")  # written by build.py
+ICON = os.environ.get("KATZENMASTER_ICON")  # written by build.py
 
 # The cat only needs QtCore/QtGui/QtWidgets (+ DBus for the Linux tray). PySide6's hooks
 # also collect Qt plugins that drag in QtQuick/QML, QtPdf, QtNetwork and GTK3, which
@@ -43,7 +43,7 @@ a = Analysis(  # noqa: F821
     noarchive=False,
 )
 dropped = [e[0] for e in a.binaries + a.datas if not keep(e)]
-print(f"catpet.spec: dropping {len(dropped)} unneeded Qt/GTK files", file=sys.stderr)
+print(f"katzenmaster.spec: dropping {len(dropped)} unneeded Qt/GTK files", file=sys.stderr)
 a.binaries = [e for e in a.binaries if keep(e)]
 a.datas = [e for e in a.datas if keep(e)]
 
@@ -54,7 +54,7 @@ exe = EXE(  # noqa: F821
     a.binaries,
     a.datas,
     [],
-    name="catpet",
+    name="katzenmaster",
     console=False,  # no console window on Windows
     icon=ICON if ICON and sys.platform == "win32" else None,
     upx=False,

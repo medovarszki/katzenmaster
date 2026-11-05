@@ -28,7 +28,7 @@ class CatTray:
         self.quit_action = self.menu.addAction(QUIT_TEXT)
         self.quit_action.triggered.connect(app.quit)
         self.icon = QSystemTrayIcon(tray_icon(sheet), app)
-        self.icon.setToolTip("catpet")
+        self.icon.setToolTip("katzenmaster")
         self.icon.setContextMenu(self.menu)
         if not QSystemTrayIcon.isSystemTrayAvailable():
             log.warning("no system tray available: the quit menu will not be visible; "

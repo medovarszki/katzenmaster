@@ -3,8 +3,8 @@ import types
 
 import pytest
 
-from catpet import config
-from catpet.brain import LEFT, RIGHT, CatBrain, State, ground_position
+from katzenmaster import config
+from katzenmaster.brain import LEFT, RIGHT, CatBrain, State, ground_position
 
 SIZE = (96, 96)
 AVAILABLE = (0, 0, 1920, 1040)  # e.g. 1080p with a 40 px taskbar at the bottom

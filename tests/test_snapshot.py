@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 def test_snapshot_cli_writes_pngs(tmp_path):
     env = dict(os.environ)
     env.pop("QT_QPA_PLATFORM", None)  # --snapshot must force offscreen by itself
-    res = subprocess.run([sys.executable, "-m", "catpet", "--snapshot", "--out", str(tmp_path)],
+    res = subprocess.run([sys.executable, "-m", "katzenmaster", "--snapshot", "--out", str(tmp_path)],
                          cwd=ROOT, env=env, capture_output=True, text=True, timeout=120)
     assert res.returncode == 0, res.stderr
     assert "offscreen" in res.stdout

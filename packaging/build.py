@@ -1,4 +1,4 @@
-"""Build a single-file catpet executable for the current OS with PyInstaller.
+"""Build a single-file katzenmaster executable for the current OS with PyInstaller.
 
     pip install -e ".[build]"
     python packaging/build.py
@@ -7,10 +7,10 @@ PyInstaller cannot cross-compile: run this on Windows for the .exe and on Linux 
 the Linux binary (the GitHub Actions workflow does both). Steps:
 
 1. generate an .ico from the sprite sheet (Windows exe icon),
-2. run PyInstaller on ``packaging/catpet.spec`` (one file, no console window, sprites
+2. run PyInstaller on ``packaging/katzenmaster.spec`` (one file, no console window, sprites
    bundled, unused Qt plugins/libraries dropped),
 3. smoke-test the result: ``<exe> --snapshot`` must render PNGs headless,
-4. package: ``dist/catpet-windows-x86_64.exe`` or ``dist/catpet-linux-x86_64.tar.gz``.
+4. package: ``dist/katzenmaster-windows-x86_64.exe`` or ``dist/katzenmaster-linux-x86_64.tar.gz``.
 """
 
 from __future__ import annotations
@@ -28,11 +28,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from catpet import config  # noqa: E402
+from katzenmaster import config  # noqa: E402
 
 DIST = ROOT / "dist"
 WORK = ROOT / "build"
-NAME = "catpet"
+NAME = "katzenmaster"
 
 
 def os_tag() -> str:
@@ -50,7 +50,7 @@ def exe_path() -> Path:
 
 def make_icon(path: Path) -> Path:
     """Sitting cat, 256 px, nearest neighbour, written as .ico by Qt's image plugin."""
-    from catpet.sprites import SpriteSheet, load_meta
+    from katzenmaster.sprites import SpriteSheet, load_meta
 
     sheet = SpriteSheet(config.SPRITE_PNG, load_meta(config.SPRITE_JSON), 1)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -60,12 +60,12 @@ def make_icon(path: Path) -> Path:
 
 
 def run_pyinstaller(icon: Path) -> Path:
-    """Build from packaging/catpet.spec (one file, no console, sprites bundled, unused Qt dropped)."""
+    """Build from packaging/katzenmaster.spec (one file, no console, sprites bundled, unused Qt dropped)."""
     import PyInstaller.__main__
 
-    os.environ["CATPET_ICON"] = str(icon)
+    os.environ["KATZENMASTER_ICON"] = str(icon)
     PyInstaller.__main__.run([
-        str(ROOT / "packaging" / "catpet.spec"),
+        str(ROOT / "packaging" / "katzenmaster.spec"),
         "--noconfirm",
         "--clean",
         "--distpath", str(DIST),
@@ -107,7 +107,7 @@ def main() -> int:
     parser.add_argument("--skip-smoke-test", action="store_true")
     args = parser.parse_args()
 
-    icon = make_icon(WORK / "catpet.ico")
+    icon = make_icon(WORK / "katzenmaster.ico")
     exe = run_pyinstaller(icon)
     if not args.skip_smoke_test:
         smoke_test(exe)

@@ -41,7 +41,7 @@ class CatWindow(QWidget):
         super().__init__(None, WINDOW_FLAGS)
         for attr in WINDOW_ATTRIBUTES:
             self.setAttribute(attr, True)
-        self.setWindowTitle("catpet")
+        self.setWindowTitle("katzenmaster")
         self.sheet = sheet
         self.brain = brain
         self._cursor_pos = cursor_pos
