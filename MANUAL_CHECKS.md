@@ -25,6 +25,18 @@ időzítéseket, például `SLEEP_AFTER = (10.0, 15.0)`. Utána állítsd vissza
 
 ## Windows 10/11
 
+### Exe (a GitHub Actions `catpet-windows-x86_64` artifactjából)
+
+| # | Lépés | Elvárt eredmény |
+|---|---|---|
+| E1 | Csomagold ki a zipet, és indítsd el dupla kattintással a `catpet-windows-x86_64.exe` fájlt. | Ha megjelenik a SmartScreen ablak: **További információ → Futtatás mindenképp**. Pár másodperc múlva megjelenik a macska. **Nem** nyílik konzolablak. |
+| E2 | Nézd meg az exe ikonját az Intézőben. | A pixeles ülő macska látszik, nem az alapértelmezett Python- vagy PyInstaller-ikon. |
+| E3 | Nyisd meg a `%TEMP%\catpet.log` fájlt (Win+R → `%TEMP%`). | Benne van az `available geometry ...` és a `catpet running on platform 'windows'` sor. |
+| E4 | Végezd el a W1–W13 pontokat az exével. | Ugyanaz az eredmény, mint forrásból futtatva. |
+| E5 | Lépj ki a tálcamenüből, majd nézd meg a Feladatkezelőt. | Nem marad futó `catpet` folyamat. |
+
+### Forrásból vagy exével
+
 | # | Lépés | Elvárt eredmény |
 |---|---|---|
 | W1 | Indítsd el az alkalmazást. | A macska a tálca **fölött** jelenik meg, a lába a tálca felső szélén van, nem takarja ki a tálca. |
@@ -42,6 +54,20 @@ időzítéseket, például `SLEEP_AFTER = (10.0, 15.0)`. Utána állítsd vissza
 | W13 | Több monitorral: cseréld meg, melyik az elsődleges kijelző. | A macska átkerül az új elsődleges kijelző aljára. |
 
 ## Linux, X11 (például Ubuntu Xorg munkamenet, KDE X11, XFCE, Cinnamon)
+
+A bináris (a GitHub Actions `catpet-linux-x86_64` artifactjából) így indítható:
+
+```bash
+tar xzf catpet-linux-x86_64.tar.gz
+```
+
+```bash
+./catpet-linux-x86_64/catpet -v
+```
+
+Ha `could not load the Qt platform plugin "xcb"` hibát kapsz, jegyezd fel a
+disztribúciót és a hiányzó könyvtárat (`QT_DEBUG_PLUGINS=1` mellett kiírja). Az
+alábbi pontok a binárissal és forrásból futtatva is érvényesek.
 
 Ellenőrizd, hogy X11-en vagy:
 

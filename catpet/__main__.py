@@ -6,7 +6,22 @@ import argparse
 import logging
 import os
 import sys
+import tempfile
 from pathlib import Path
+
+
+def _ensure_std_streams() -> Path | None:
+    """A windowed (no console) executable has ``sys.stdout``/``sys.stderr`` set to None.
+
+    Then ``print`` would crash and log messages would vanish: send output to devnull and
+    return a log file path (``<temp>/catpet.log``) instead.
+    """
+    if sys.stdout is not None and sys.stderr is not None:
+        return None
+    devnull = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115 - lives for the process
+    sys.stdout = sys.stdout or devnull
+    sys.stderr = sys.stderr or devnull
+    return Path(tempfile.gettempdir()) / "catpet.log"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -17,8 +32,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
     args = parser.parse_args(argv)
 
+    log_file = _ensure_std_streams()
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
-                        format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+                        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+                        **({"filename": str(log_file), "filemode": "w", "encoding": "utf-8"}
+                           if log_file else {}))
 
     if args.snapshot:
         os.environ["QT_QPA_PLATFORM"] = "offscreen"  # must be set before QApplication exists

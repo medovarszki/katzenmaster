@@ -47,6 +47,14 @@
 - [x] README (telepítés, indítás, ismert korlátok)
 - [x] MANUAL_CHECKS.md (Windows + Linux külön)
 
+### 7. Futtatható állomány (második kör)
+- [x] Egyfájlos build PyInstallerrel: `packaging/build.py` + `packaging/catpet.spec`
+- [x] Fagyasztott futás: assetek a bundle-ből (`config.assets_dir()`); konzol nélküli módban a napló `%TEMP%/catpet.log`-ba megy
+- [x] Linux bináris helyben buildelve, smoke test (offscreen), valódi X11 (Xvfb) és Wayland (weston) alatt futtatva
+- [x] GitHub Actions: tesztek és build Windowson és Linuxon, artifactok, `v*` tagre Release
+- [ ] Windows `.exe` a CI-on lebuildelve és smoke testelve
+- [x] README és MANUAL_CHECKS frissítve
+
 ## Napló
 
 - **#1** Az adattár üres volt: a leírásban „már meglévő” `assets/sprites/` (png/json/generátor) nem létezett. Megírtam a `generate_sprites.py`-t (csak PySide6 `QImage`, procedurális pixel art, automatikus körvonal), ebből készült a `sprites.png` (6×4 cella, 32×32) és a `sprites.json` (`sit`/`blink`/`sleep`/`walk`, sor, képkockaszám, fps, loop; `walk` jobbra néz). Felnagyítva megnéztem; a „z” betűket újrarajzoltam (torzak voltak, halványak).
@@ -56,3 +64,4 @@
 - **#3** Ellenőrzés valódi X11-en (Xvfb, WM nélkül): `_NET_WM_WINDOW_TYPE_UTILITY`, `_NET_WM_STATE_ABOVE`, input focus False, Motif dekoráció 0, 32 bites ARGB visual, üres input shape (= átkattintható), y = 720−96, az ablak mozog, SIGINT-re exit 0. A Qt nem állít `_NET_WM_STATE_SKIP_TASKBAR`-t – a `UTILITY` típust a legtöbb tálca kihagyja; natív X11 kódot ezért nem írtam, kézi ellenőrzési pont lett. 70 teszt zöld.
 - **#4** Tálcaikon: 32/64/96 px-es nearest-neighbor változatok egy `QIcon`-ban (a 96 px-es kép rendszer általi kicsinyítése elmosódhatott). `SpriteSheet.frame()` kapott egy opcionális `scale` paramétert. Wayland próba valódi kompozitoron (weston `--backend=headless`, `QT_QPA_PLATFORM=wayland`): figyelmeztetés a logban, fut, SIGINT-re exit 0. 71 teszt zöld.
 - **#5** `README.md` (telepítés, indítás, kapcsolók, konfiguráció, felépítés, platformkorlátok: Wayland, X11 kompozitor, GNOME tray, HiDPI) és `MANUAL_CHECKS.md` (Windows W1–W13, Linux X11 L1–L12, Wayland WL1–WL4). `pip install -e .[dev]` venv-ben ellenőrizve, másik munkakönyvtárból is megtalálja az asseteket. Végső kör: 71 teszt zöld, friss snapshot rendben. Minden kritérium kipipálva.
+- **#6** Munka a `main` ágon (`CLAUDE.md`). Futtatható állomány PyInstallerrel. A PyInstaller nem tud keresztfordítani, ezért a Windows-build a GitHub Actions `windows-latest` runnerén készül. Az első Linux-build 75 MB lett, mert a PySide6 hookjai behúzták a virtuális billentyűzet (QtQuick/QML), a PDF és a Lottie képformátum, valamint a GTK3-téma pluginjait. Ezeket a `.spec` kiszűri, így 57 MB lett. A `libcrypto`/`libssl` és a `Qt6OpenGL` szándékosan bent maradt (Python `_hashlib`/`_ssl`, illetve az xcb plugin használhatja). A kész bináris Xvfb alatt `UTILITY`/`ABOVE` tulajdonságú, üres input shape-pel; weston alatt figyelmeztet és fut; plugin-betöltési hiba nincs (`QT_DEBUG_PLUGINS=1`). 76 teszt zöld.

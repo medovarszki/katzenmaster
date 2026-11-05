@@ -70,6 +70,78 @@ A `--snapshot` kimenete:
 - `contact_sheet.png`: az összes állapot egy képen, sakktáblán és sima színen
 - `timeline.txt`: egy fix seedű, 4 perces szimuláció állapotváltásai szkriptelt kurzorral
 
+## Futtatható állomány (Windows `.exe`, Linux bináris)
+
+Python telepítése nélkül futtatható, egyetlen fájlból álló változat. PyInstallerrel
+készül, a sprite-ok benne vannak.
+
+### Letöltés a GitHubról (ajánlott)
+
+Minden `main`-re pusholt commit után a GitHub Actions `build` workflow mindkét
+platformra elkészíti a programot:
+
+1. GitHub → **Actions** → **build** → a legutóbbi zöld futás.
+2. Lent, az **Artifacts** részben:
+   - `catpet-windows-x86_64`: egy zip, benne a `catpet-windows-x86_64.exe`;
+   - `catpet-linux-x86_64`: egy zip, benne a `catpet-linux-x86_64.tar.gz`.
+
+Ha `v`-vel kezdődő taget pusholsz, a workflow GitHub Release-t is készít, és a két
+fájl ott is letölthető lesz:
+
+```bash
+git tag v0.1.0
+```
+
+```bash
+git push origin v0.1.0
+```
+
+### Saját gépen
+
+A PyInstaller nem tud keresztfordítani: a Windows `.exe` Windowson, a Linux bináris
+Linuxon készül.
+
+```bash
+pip install -e ".[build]"
+```
+
+```bash
+python packaging/build.py
+```
+
+A build lépései:
+
+1. ikon a sprite-ból;
+2. PyInstaller a `packaging/catpet.spec` alapján: egy fájl, konzolablak nélkül, a
+   nem használt Qt-részek (Quick/QML, PDF, hálózat, GTK-téma) nélkül;
+3. smoke test: a kész fájl `--snapshot` módban lerenderel minden állapotot;
+4. a kimenet a `dist/` mappába kerül: `catpet-windows-x86_64.exe` vagy
+   `catpet-linux-x86_64.tar.gz`.
+
+### Használat
+
+**Windows:** dupla kattintás a `catpet-windows-x86_64.exe` fájlra. Az exe nincs
+digitálisan aláírva, ezért a SmartScreen első indításkor figyelmeztethet: **További
+információ → Futtatás mindenképp**. Egyes vírusirtók gyanúsnak jelölhetik az
+egyfájlos PyInstaller-programokat; ez téves riasztás. Indításkor a program néhány
+másodpercig kicsomagolja magát egy ideiglenes mappába, ezért a macska kis késéssel
+jelenik meg. Mivel nincs konzolablak, a napló ide kerül: `%TEMP%\catpet.log`.
+
+**Linux:**
+
+```bash
+tar xzf catpet-linux-x86_64.tar.gz
+```
+
+```bash
+./catpet-linux-x86_64/catpet
+```
+
+Terminálból indítva a napló a terminálban jelenik meg. Ubuntu 22.04-en készül, ezért
+glibc 2.35 vagy újabb kell hozzá (Ubuntu 22.04+, Debian 12+, Fedora 36+). Az xcb
+platform plugin függőségei benne vannak a csomagban; a Wayland-korlátok ugyanazok,
+mint forrásból futtatva.
+
 ## Tesztek
 
 ```bash
@@ -102,6 +174,8 @@ A sprite sheet az `assets/sprites/generate_sprites.py` futtatásával generálha
 | `catpet/tray.py` | Tálcaikon |
 | `catpet/app.py` | Az elemek összekötése |
 | `catpet/snapshot.py` | A `--snapshot` mód |
+| `packaging/build.py`, `packaging/catpet.spec` | Futtatható állomány készítése (PyInstaller) |
+| `.github/workflows/build.yml` | CI: tesztek és build Windowsra és Linuxra, release tagre |
 
 ## Platformok és ismert korlátok
 

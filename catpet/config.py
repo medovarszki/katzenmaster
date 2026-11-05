@@ -3,10 +3,19 @@
 Times are in seconds, distances in logical (device-independent) screen pixels.
 """
 
+import sys
 from pathlib import Path
 
+
+def assets_dir() -> Path:
+    """Sprite folder: next to the package, or inside a PyInstaller bundle when frozen."""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS) / "assets" / "sprites"
+    return Path(__file__).resolve().parent.parent / "assets" / "sprites"
+
+
 # --- assets / rendering ----------------------------------------------------
-ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets" / "sprites"
+ASSETS_DIR = assets_dir()
 SPRITE_PNG = ASSETS_DIR / "sprites.png"
 SPRITE_JSON = ASSETS_DIR / "sprites.json"
 
