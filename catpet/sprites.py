@@ -87,18 +87,24 @@ class SpriteSheet:
             x, y, w, h = frame_rect(meta, spec.name, spec.frames - 1)
             if x + w > self._sheet.width() or y + h > self._sheet.height():
                 raise ValueError(f"animation {spec.name!r} does not fit into the sheet")
-        self._cache: dict[tuple[str, int, bool], object] = {}
+        self._cache: dict[tuple[str, int, bool, int], object] = {}
 
     @property
     def size(self) -> tuple[int, int]:
         """Size of one scaled frame in pixels."""
         return (self.meta.frame_width * self.scale, self.meta.frame_height * self.scale)
 
-    def frame(self, anim: str, index: int, mirrored: bool = False):
-        """Return the scaled (and optionally horizontally mirrored) frame as a QImage."""
+    def frame(self, anim: str, index: int, mirrored: bool = False, scale: int | None = None):
+        """Return the scaled (and optionally horizontally mirrored) frame as a QImage.
+
+        ``scale`` defaults to the sheet's scale; it must be a positive integer.
+        """
         from PySide6.QtCore import Qt
 
-        key = (anim, index, mirrored)
+        scale = self.scale if scale is None else int(scale)
+        if scale < 1:
+            raise ValueError("scale must be a positive integer")
+        key = (anim, index, mirrored, scale)
         img = self._cache.get(key)
         if img is None:
             x, y, w, h = frame_rect(self.meta, anim, index)
@@ -106,8 +112,8 @@ class SpriteSheet:
             if mirrored:
                 img = _mirror(img)
             img = img.scaled(
-                w * self.scale,
-                h * self.scale,
+                w * scale,
+                h * scale,
                 Qt.AspectRatioMode.IgnoreAspectRatio,
                 Qt.TransformationMode.FastTransformation,
             )

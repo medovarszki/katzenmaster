@@ -124,18 +124,20 @@ def test_default_cursor_source_is_qcursor(sheet):
 
 
 def test_tray_has_single_quit_action(qapp, sheet):
-    tray = CatTray(qapp, sheet.frame("sit", 0))
+    tray = CatTray(qapp, sheet)
     actions = tray.menu.actions()
     assert [a.text() for a in actions] == [QUIT_TEXT] == ["Kilépés"]
     assert tray.icon.contextMenu() is tray.menu
     assert not tray.icon.icon().isNull()
+    sizes = {(sz.width(), sz.height()) for sz in tray.icon.icon().availableSizes()}
+    assert {(32, 32), (64, 64), (96, 96)} <= sizes
 
 
 def test_tray_quit_action_quits(qapp, sheet, monkeypatch):
     called = []
     tray = CatTray.__new__(CatTray)
     monkeypatch.setattr(type(qapp), "quit", lambda *a: called.append(True))
-    CatTray.__init__(tray, qapp, sheet.frame("sit", 0))
+    CatTray.__init__(tray, qapp, sheet)
     tray.quit_action.trigger()
     assert called
 
@@ -143,7 +145,7 @@ def test_tray_quit_action_quits(qapp, sheet, monkeypatch):
 def test_tray_warns_when_unavailable(qapp, sheet, caplog, monkeypatch):
     monkeypatch.setattr(QSystemTrayIcon, "isSystemTrayAvailable", staticmethod(lambda: False))
     with caplog.at_level("WARNING"):
-        CatTray(qapp, sheet.frame("sit", 0))
+        CatTray(qapp, sheet)
     assert "no system tray" in caplog.text
 
 

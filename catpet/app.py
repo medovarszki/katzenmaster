@@ -55,7 +55,7 @@ def run() -> int:
     sheet = load_sheet()
     cat = create_cat(sheet)
     cat.attach_to_primary_screen()
-    tray = CatTray(app, sheet.frame("sit", 0))
+    tray = CatTray(app, sheet)
     tray.show()
     cat.start()
     # Ctrl+C in the terminal also quits (the 30 fps timer lets Python handle the signal)

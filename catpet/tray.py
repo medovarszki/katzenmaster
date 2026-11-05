@@ -4,20 +4,30 @@ from __future__ import annotations
 
 import logging
 
-from PySide6.QtGui import QIcon, QImage, QPixmap
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
+
+from .sprites import SpriteSheet
 
 log = logging.getLogger(__name__)
 
 QUIT_TEXT = "Kilépés"
 
 
+def tray_icon(sheet: SpriteSheet) -> QIcon:
+    """The sitting cat at 1x, 2x and 3x (nearest neighbour), so the OS can pick a crisp size."""
+    icon = QIcon()
+    for scale in (1, 2, 3):
+        icon.addPixmap(QPixmap.fromImage(sheet.frame("sit", 0, scale=scale)))
+    return icon
+
+
 class CatTray:
-    def __init__(self, app: QApplication, icon_image: QImage) -> None:
+    def __init__(self, app: QApplication, sheet: SpriteSheet) -> None:
         self.menu = QMenu()
         self.quit_action = self.menu.addAction(QUIT_TEXT)
         self.quit_action.triggered.connect(app.quit)
-        self.icon = QSystemTrayIcon(QIcon(QPixmap.fromImage(icon_image)), app)
+        self.icon = QSystemTrayIcon(tray_icon(sheet), app)
         self.icon.setToolTip("catpet")
         self.icon.setContextMenu(self.menu)
         if not QSystemTrayIcon.isSystemTrayAvailable():

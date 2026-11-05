@@ -100,6 +100,13 @@ def test_walk_faces_right(meta):
         assert right > left * 2
 
 
+def test_explicit_scale(sheet):
+    assert sheet.frame("sit", 0, scale=1).size().width() == 32
+    assert sheet.frame("sit", 0, scale=2).size().width() == 64
+    with pytest.raises(ValueError):
+        sheet.frame("sit", 0, scale=0)
+
+
 def test_frame_cache_returns_same_object(sheet):
     assert sheet.frame("sit", 0) is sheet.frame("sit", 0)
 
