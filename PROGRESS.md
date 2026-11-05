@@ -35,7 +35,7 @@
 ### 6. Platformok
 - [x] Windows + Linux (X11): csak Qt API, nincs natív kód
 - [x] Wayland: figyelmeztetés a logban, nem omlik össze
-- [ ] Wayland: README leírja a korlátokat
+- [x] Wayland: README leírja a korlátokat
 
 ### Infrastruktúra / ellenőrzés
 - [x] Csomagszerkezet: `catpet/`, `tests/`, `assets/sprites/`, `pyproject.toml`
@@ -44,8 +44,8 @@
 - [x] `python -m catpet` indítás
 - [x] `python -m catpet --snapshot` → PNG-k az `out/` mappába (átlátszó + színes háttérre kompozitált)
 - [x] Snapshot képek szemrevételezve
-- [ ] README (telepítés, indítás, ismert korlátok)
-- [ ] MANUAL_CHECKS.md (Windows + Linux külön)
+- [x] README (telepítés, indítás, ismert korlátok)
+- [x] MANUAL_CHECKS.md (Windows + Linux külön)
 
 ## Napló
 
@@ -55,3 +55,4 @@
 - **#3** `window.py` (flagek + attribútumok, `paintEvent` Source-kompozícióval törölt átlátszó háttérrel, 30 fps `QTimer`, `QCursor.pos()`, `availableGeometryChanged` / `primaryScreenChanged` követése), `tray.py` (egyetlen „Kilépés”), `app.py`, `__main__.py`, `snapshot.py`. Az első snapshot két hibát mutatott: (a) a kontaktlap oszlopai elcsúsztak → fix oszlopszélesség; (b) a `timeline.txt` szerint 3 perc alatt sosem aludt el (az „egyhuzamban 20–40 s ülés” a 0,5 séta-eséllyel szinte sosem teljesül) → az alvás most az ébren töltött időhöz kötött (kurzor-interakció nélkül 60–120 s), és ülésből, a következő döntéskor következik be. Snapshot képek megnézve: átlátszó háttér (sakktábla átlátszik), helyes irány, éles pixelek, váltakozó képkockák, nincs levágás.
 - **#3** Ellenőrzés valódi X11-en (Xvfb, WM nélkül): `_NET_WM_WINDOW_TYPE_UTILITY`, `_NET_WM_STATE_ABOVE`, input focus False, Motif dekoráció 0, 32 bites ARGB visual, üres input shape (= átkattintható), y = 720−96, az ablak mozog, SIGINT-re exit 0. A Qt nem állít `_NET_WM_STATE_SKIP_TASKBAR`-t – a `UTILITY` típust a legtöbb tálca kihagyja; natív X11 kódot ezért nem írtam, kézi ellenőrzési pont lett. 70 teszt zöld.
 - **#4** Tálcaikon: 32/64/96 px-es nearest-neighbor változatok egy `QIcon`-ban (a 96 px-es kép rendszer általi kicsinyítése elmosódhatott). `SpriteSheet.frame()` kapott egy opcionális `scale` paramétert. Wayland próba valódi kompozitoron (weston `--backend=headless`, `QT_QPA_PLATFORM=wayland`): figyelmeztetés a logban, fut, SIGINT-re exit 0. 71 teszt zöld.
+- **#5** `README.md` (telepítés, indítás, kapcsolók, konfiguráció, felépítés, platformkorlátok: Wayland, X11 kompozitor, GNOME tray, HiDPI) és `MANUAL_CHECKS.md` (Windows W1–W13, Linux X11 L1–L12, Wayland WL1–WL4). `pip install -e .[dev]` venv-ben ellenőrizve, másik munkakönyvtárból is megtalálja az asseteket. Végső kör: 71 teszt zöld, friss snapshot rendben. Minden kritérium kipipálva.
