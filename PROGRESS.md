@@ -16,17 +16,17 @@
 - [ ] Ha az `availableGeometry` változik (tálca átméretezés), követi
 
 ### 3. Állapotgép
-- [ ] `sit` → (ritkán) `blink` → vissza `sit`
-- [ ] `sit` → `walk` jobbra/balra véletlen távolságra → `sit`
-- [ ] Hosszabb tétlenség után `sleep`, alvás végén `sit`
-- [ ] Szélen megfordul, sosem lóg ki
-- [ ] Időzítések véletlenszerűek, de konstansokban állíthatók (`catpet/config.py`)
+- [x] `sit` → (ritkán) `blink` → vissza `sit`
+- [x] `sit` → `walk` jobbra/balra véletlen távolságra → `sit`
+- [x] Hosszabb tétlenség után `sleep`, alvás végén `sit`
+- [x] Szélen megfordul, sosem lóg ki
+- [x] Időzítések véletlenszerűek, de konstansokban állíthatók (`catpet/config.py`)
 - [ ] `walk` jobbra néz, balra tükrözve rajzolódik
 
 ### 4. Reakció a kurzorra (`QCursor.pos()`)
-- [ ] Alvó macska + közeli kurzor → felébred és leül
-- [ ] Ülő macska + közeli kurzor → elindul a kurzor felé vízszintesen, majd leül
-- [ ] Reakció után cooldown (nem pörög folyamatosan)
+- [x] Alvó macska + közeli kurzor → felébred és leül
+- [x] Ülő macska + közeli kurzor → elindul a kurzor felé vízszintesen, majd leül
+- [x] Reakció után cooldown (nem pörög folyamatosan)
 
 ### 5. Tálca ikon
 - [ ] `QSystemTrayIcon` egyetlen „Kilépés” menüponttal, ami kilép
@@ -50,3 +50,4 @@
 
 - **#1** Az adattár üres volt: a leírásban „már meglévő” `assets/sprites/` (png/json/generátor) nem létezett. Megírtam a `generate_sprites.py`-t (csak PySide6 `QImage`, procedurális pixel art, automatikus körvonal), ebből készült a `sprites.png` (6×4 cella, 32×32) és a `sprites.json` (`sit`/`blink`/`sleep`/`walk`, sor, képkockaszám, fps, loop; `walk` jobbra néz). Felnagyítva megnéztem; a „z” betűket újrarajzoltam (torzak voltak, halványak).
 - **#1** Projektváz + `config.py` (minden konstans), `sprites.py` (metaadat + `SpriteSheet`: vágás, `FastTransformation`, tükrözés, cache), `animation.py`. 21 teszt zöld; egy lebegőpontos képkocka-hiba (10×0,1 < 1,0) epszilonnal javítva.
+- **#2** `brain.py`: GUI nélküli állapotgép (`SIT/BLINK/WALK/SLEEP/CHASE`), `ground_position()` az `availableGeometry` aljához, szélen visszapattanó séta, kurzorreakció cooldownnal (ha a kurzor pont a macska fölött van, pislog). 22 új teszt; 2 elbukott, de mindkettő tesztbeli időzítési hiba volt (pontosítva). 43 teszt zöld.
