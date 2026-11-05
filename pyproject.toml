@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "catpet"
+version = "0.1.0"
+description = "A tiny pixel-art cat that lives at the bottom of your screen."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["PySide6>=6.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools]
+packages = ["catpet"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

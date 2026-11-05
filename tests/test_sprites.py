@@ -1,0 +1,109 @@
+import pytest
+from PySide6.QtGui import QImage
+
+from catpet import config
+from catpet.sprites import SpriteSheet, frame_rect, parse_meta
+
+REQUIRED = {"sit", "blink", "sleep", "walk"}
+
+
+def test_meta_has_required_animations(meta):
+    assert REQUIRED <= set(meta.animations)
+    assert (meta.frame_width, meta.frame_height) == (32, 32)
+    rows = [a.row for a in meta.animations.values()]
+    assert len(rows) == len(set(rows)), "one animation per row"
+
+
+def test_loop_flags(meta):
+    assert meta.animations["sit"].loop
+    assert meta.animations["walk"].loop
+    assert meta.animations["sleep"].loop
+    assert not meta.animations["blink"].loop
+
+
+def test_parse_meta_rejects_bad_values():
+    with pytest.raises(ValueError):
+        parse_meta({"frame_width": 32, "frame_height": 32,
+                    "animations": {"x": {"row": 0, "frames": 0, "fps": 1, "loop": True}}})
+
+
+def test_frame_rect(meta):
+    walk = meta.animations["walk"]
+    assert frame_rect(meta, "walk", 2) == (64, walk.row * 32, 32, 32)
+    with pytest.raises(IndexError):
+        frame_rect(meta, "walk", walk.frames)
+
+
+def test_default_scale_is_3x(sheet):
+    assert config.SCALE == 3
+    assert sheet.size == (96, 96)
+
+
+def _raw_frame(meta, anim, i):
+    img = QImage(str(config.SPRITE_PNG)).convertToFormat(QImage.Format.Format_ARGB32)
+    return img.copy(*frame_rect(meta, anim, i))
+
+
+@pytest.mark.parametrize("anim", sorted(REQUIRED))
+def test_nearest_neighbour_scaling(meta, sheet, anim):
+    s = config.SCALE
+    for i in range(meta.animations[anim].frames):
+        raw = _raw_frame(meta, anim, i)
+        big = sheet.frame(anim, i).convertToFormat(QImage.Format.Format_ARGB32)
+        assert (big.width(), big.height()) == (32 * s, 32 * s)
+        for y in range(32):
+            for x in range(32):
+                src = raw.pixel(x, y)
+                # every pixel of the s*s block equals the source pixel -> crisp, no blur
+                for dy in range(s):
+                    for dx in range(s):
+                        assert big.pixel(x * s + dx, y * s + dy) == src
+
+
+def test_mirroring(meta, sheet):
+    for i in range(meta.animations["walk"].frames):
+        right = sheet.frame("walk", i).convertToFormat(QImage.Format.Format_ARGB32)
+        left = sheet.frame("walk", i, mirrored=True).convertToFormat(QImage.Format.Format_ARGB32)
+        w = right.width()
+        for y in range(0, right.height(), 7):
+            for x in range(w):
+                assert left.pixel(x, y) == right.pixel(w - 1 - x, y)
+
+
+def _opaque_bbox(img):
+    xs, ys = [], []
+    for y in range(img.height()):
+        for x in range(img.width()):
+            if img.pixelColor(x, y).alpha() > 0:
+                xs.append(x)
+                ys.append(y)
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+@pytest.mark.parametrize("anim", sorted(REQUIRED))
+def test_frames_are_not_cropped_and_stand_on_ground(meta, anim):
+    for i in range(meta.animations[anim].frames):
+        raw = _raw_frame(meta, anim, i)
+        x0, y0, x1, y1 = _opaque_bbox(raw)
+        # nothing touches the left/right/top edges of the cell (would look cut off)
+        assert x0 > 0 and y0 > 0 and x1 < 31, (anim, i)
+        # feet are on the bottom row so the cat stands on the taskbar edge
+        assert y1 == 31, (anim, i)
+
+
+def test_walk_faces_right(meta):
+    """Head (most opaque columns in the upper half) is on the right side of the walk frames."""
+    for i in range(meta.animations["walk"].frames):
+        raw = _raw_frame(meta, "walk", i)
+        left = sum(raw.pixelColor(x, y).alpha() > 0 for y in range(4, 16) for x in range(0, 16))
+        right = sum(raw.pixelColor(x, y).alpha() > 0 for y in range(4, 16) for x in range(16, 32))
+        assert right > left * 2
+
+
+def test_frame_cache_returns_same_object(sheet):
+    assert sheet.frame("sit", 0) is sheet.frame("sit", 0)
+
+
+def test_missing_png_raises(meta, tmp_path):
+    with pytest.raises(FileNotFoundError):
+        SpriteSheet(tmp_path / "nope.png", meta, 3)
