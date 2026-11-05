@@ -67,7 +67,7 @@ class CatBrain:
         self.state = State.SIT
         self.animator = Animator(specs["sit"])
         # timers
-        self.idle = 0.0  # continuous time spent sitting (incl. blinks)
+        self.awake = 0.0  # time since the last nap / cursor interaction
         self.action_timer = 0.0
         self.blink_timer = 0.0
         self.sleep_threshold = 0.0
@@ -76,7 +76,8 @@ class CatBrain:
         self.chase_target = self.x
         self.chase_time = 0.0
         self.cooldown = 0.0
-        self._enter_sit(reset_idle=True)
+        self._reset_awake()
+        self._enter_sit()
 
     # ------------------------------------------------------------------ helpers
     def _uniform(self, rng_range: tuple[float, float]) -> float:
@@ -86,13 +87,14 @@ class CatBrain:
         self.state = state
         self.animator.restart(self.specs[ANIMATION_FOR_STATE[state]])
 
-    def _enter_sit(self, reset_idle: bool) -> None:
+    def _reset_awake(self) -> None:
+        self.awake = 0.0
+        self.sleep_threshold = self._uniform(self.cfg.SLEEP_AFTER)
+
+    def _enter_sit(self) -> None:
         self._set_state(State.SIT)
         self.action_timer = self._uniform(self.cfg.SIT_ACTION_INTERVAL)
         self.blink_timer = self._uniform(self.cfg.BLINK_INTERVAL)
-        if reset_idle:
-            self.idle = 0.0
-            self.sleep_threshold = self._uniform(self.cfg.SLEEP_AFTER)
 
     def _enter_walk(self) -> None:
         self.facing = self.rng.choice((LEFT, RIGHT))
@@ -136,7 +138,7 @@ class CatBrain:
         """Jump straight into a state (used by --snapshot)."""
         self.facing = facing
         if state is State.SIT:
-            self._enter_sit(reset_idle=True)
+            self._enter_sit()
         elif state is State.SLEEP:
             self._enter_sleep()
         elif state is State.WALK:
@@ -177,15 +179,18 @@ class CatBrain:
             if near:
                 # woken up by the cursor: sit up, and don't react again immediately
                 self.cooldown = self.cfg.REACT_COOLDOWN
-                self._enter_sit(reset_idle=True)
+                self._reset_awake()
+                self._enter_sit()
             elif self.sleep_timer <= 0:
-                self._enter_sit(reset_idle=True)
+                self._reset_awake()
+                self._enter_sit()
+            return
 
-        elif self.state in (State.SIT, State.BLINK):
+        self.awake += dt
+        if self.state in (State.SIT, State.BLINK):
             if near and self.cooldown <= 0:
                 self._react_to_cursor(cursor[0])
                 return
-            self.idle += dt
             if self.state is State.BLINK:
                 if self.animator.finished:
                     self.state = State.SIT
@@ -193,10 +198,10 @@ class CatBrain:
                 return
             self.action_timer -= dt
             self.blink_timer -= dt
-            if self.idle >= self.sleep_threshold:
-                self._enter_sleep()
-            elif self.action_timer <= 0:
-                if self.rng.random() < self.cfg.WALK_PROBABILITY:
+            if self.action_timer <= 0:
+                if self.awake >= self.sleep_threshold:
+                    self._enter_sleep()
+                elif self.rng.random() < self.cfg.WALK_PROBABILITY:
                     self._enter_walk()
                 else:
                     self.action_timer = self._uniform(self.cfg.SIT_ACTION_INTERVAL)
@@ -209,7 +214,7 @@ class CatBrain:
             self._move(step)
             self.walk_remaining -= step
             if self.walk_remaining <= 0:
-                self._enter_sit(reset_idle=True)
+                self._enter_sit()
 
         elif self.state is State.CHASE:
             self.chase_time += dt
@@ -218,20 +223,20 @@ class CatBrain:
             dx = self.chase_target - self.x
             if abs(dx) <= self.cfg.CHASE_ARRIVE_DISTANCE or self.chase_time >= self.cfg.CHASE_TIMEOUT:
                 self.cooldown = self.cfg.REACT_COOLDOWN
-                self._enter_sit(reset_idle=True)
+                self._enter_sit()
                 return
             self.facing = RIGHT if dx > 0 else LEFT
             step = min(abs(dx), self.cfg.CHASE_SPEED * dt)
             self.x = self.clamp_x(self.x + self.facing * step)
 
     def _react_to_cursor(self, cursor_x: float) -> None:
+        self._reset_awake()  # playing with the cursor keeps the cat awake
         target = self._target_for_cursor(cursor_x)
         if abs(target - self.x) > self.cfg.CHASE_ARRIVE_DISTANCE:
             self._enter_chase(cursor_x)
         else:
             # cursor is right above the cat: acknowledge it with a blink
             self.cooldown = self.cfg.REACT_COOLDOWN
-            self.idle = 0.0
             self.blink_timer = self._uniform(self.cfg.BLINK_INTERVAL)
             self._set_state(State.BLINK)
 

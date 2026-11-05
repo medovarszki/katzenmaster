@@ -73,23 +73,48 @@ def test_transitions_follow_the_rules(meta):
 
 
 def test_blink_returns_to_sit(meta):
-    b = make_brain(meta, cfg=cfg_with(BLINK_INTERVAL=(0.5, 0.5), SIT_ACTION_INTERVAL=(99, 99),
-                                      SLEEP_AFTER=(999, 999)))
+    b = make_brain(meta, cfg=cfg_with(BLINK_INTERVAL=(0.5, 0.5), SIT_ACTION_INTERVAL=(99, 99)))
     run(b, 0.6)
     assert b.state is State.BLINK and b.animation == "blink"
     run(b, meta.animations["blink"].duration + 0.1)
     assert b.state is State.SIT
 
 
-def test_falls_asleep_after_long_idle_and_wakes_up(meta):
-    cfg = cfg_with(WALK_PROBABILITY=0.0, SLEEP_AFTER=(10, 10), SLEEP_DURATION=(5, 5))
+def test_falls_asleep_after_long_awake_time_and_wakes_up(meta):
+    cfg = cfg_with(WALK_PROBABILITY=0.0, SIT_ACTION_INTERVAL=(1, 1), SLEEP_AFTER=(10, 10),
+                   SLEEP_DURATION=(5, 5))
     b = make_brain(meta, cfg=cfg)
     run(b, 9.5)
     assert b.state in (State.SIT, State.BLINK)
-    run(b, 1.0)
+    run(b, 1.6)
     assert b.state is State.SLEEP and b.animation == "sleep"
     run(b, 5.2)
     assert b.state is State.SIT
+
+
+def test_walking_cat_still_gets_sleepy(meta):
+    """Awake time counts while walking too, so an active cat eventually naps."""
+    cfg = cfg_with(WALK_PROBABILITY=1.0, SIT_ACTION_INTERVAL=(1, 1), SLEEP_AFTER=(20, 20))
+    b = make_brain(meta, cfg=cfg)
+    rec = []
+    run(b, 60, record=rec)
+    assert State.WALK in {s for s, _, _ in rec}
+    first_sleep = next(i for i, (s, _, _) in enumerate(rec) if s is State.SLEEP)
+    assert rec[first_sleep - 1][0] in (State.SIT, State.BLINK)  # only falls asleep from sitting
+    assert first_sleep * DT >= 20
+
+
+def test_cursor_interaction_keeps_cat_awake(meta):
+    cfg = cfg_with(WALK_PROBABILITY=0.0, SIT_ACTION_INTERVAL=(1, 1), SLEEP_AFTER=(10, 10),
+                   BLINK_INTERVAL=(99, 99))
+    b = make_brain(meta, cfg=cfg)
+    run(b, 8)
+    b.update(DT, _cursor_near(b, 0))  # cursor right above -> blink, awake time reset
+    assert b.awake < 1
+    run(b, 8)
+    assert b.state is not State.SLEEP
+    run(b, 4)
+    assert b.state is State.SLEEP
 
 
 def test_walk_moves_and_mirrors(meta):
