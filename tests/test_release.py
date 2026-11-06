@@ -173,3 +173,23 @@ def test_cli_plan_writes_github_output(tmp_path):
     assert res.returncode == 0 and written == "tag=\n"
     res, written = plan(INPUT_VERSION="999.0.0")
     assert res.returncode == 1 and "does not match" in res.stderr and written == ""
+
+
+def test_package_workflow_publishes_the_release_files():
+    pkg = (ROOT / ".github" / "workflows" / "package.yml").read_text(encoding="utf-8")
+    build = _workflow()
+    # called after every release, and runnable by hand for an existing one
+    assert "workflow_call:" in pkg and "workflow_dispatch:" in pkg
+    assert re.search(r"package:\n\s+needs: \[plan, release\]", build)
+    assert "uses: ./.github/workflows/package.yml" in build
+    assert "packages: write" in pkg and "packages: write" in build
+    # exactly the released files, verified, linked to the repository
+    assert "gh release download" in pkg and "sha256sum -c SHA256SUMS.txt" in pkg
+    for name in ("katzenmaster-windows-x86_64.exe", "katzenmaster-linux-x86_64.tar.gz",
+                 "SHA256SUMS.txt"):
+        assert f"{name}:" in pkg
+    assert "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" in pkg
+    assert 'if [[ "$TAG" != *-* ]]' in pkg  # no "latest" for pre-releases
+    # the free-text tag only reaches the scripts through env
+    assert "TAG: ${{ inputs.tag }}" in pkg
+    assert pkg.count("inputs.tag") == 1

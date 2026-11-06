@@ -5,6 +5,19 @@
        alt="A pixel art vörös cirmos macska ül a tálca fölött; jobb oldalt a tálcán a program ikonja">
 </p>
 
+<p align="center">
+  <a href="https://github.com/medovarszki/katzenmaster/releases/latest/download/katzenmaster-windows-x86_64.exe"><img
+     src="https://img.shields.io/badge/Let%C3%B6lt%C3%A9s-Windows%20.exe-2f6fb5?style=for-the-badge"
+     alt="Letöltés Windowsra (.exe)"></a>
+  <a href="https://github.com/medovarszki/katzenmaster/releases/latest/download/katzenmaster-linux-x86_64.tar.gz"><img
+     src="https://img.shields.io/badge/Let%C3%B6lt%C3%A9s-Linux%20.tar.gz-e8913a?style=for-the-badge"
+     alt="Letöltés Linuxra (.tar.gz)"></a>
+  <br>
+  <a href="https://github.com/medovarszki/katzenmaster/releases/latest"><img
+     src="https://img.shields.io/github/v/release/medovarszki/katzenmaster?label=leg%C3%BAjabb%20kiad%C3%A1s"
+     alt="Legújabb kiadás"></a>
+</p>
+
 Egy pixel art macska, aki a képernyő alján él. Ül, néha pislog, sétál a képernyő
 egyik szélétől a másikig, nyújtózik, ásít és mosakszik (a mancsát nyalogatja). Ha
 sokáig nem foglalkoznak vele, ásít egyet és elalszik, és ha magától ébred,
@@ -104,6 +117,21 @@ Linuxon a letöltés ellenőrzése (a két fájl ugyanabban a mappában legyen):
 sha256sum -c --ignore-missing SHA256SUMS.txt
 ```
 
+**GitHub Packages:** ugyanez a három fájl OCI-csomagként a repó **Packages** részében
+is megtalálható (`ghcr.io/medovarszki/katzenmaster`, verziószámmal és `latest`
+címkével). Innen nem kattintással, hanem az [ORAS](https://oras.land/) paranccsal lehet
+letölteni, ami mindhárom fájlt az aktuális mappába teszi:
+
+```bash
+oras pull ghcr.io/medovarszki/katzenmaster:latest
+```
+
+Egy adott verzió:
+
+```bash
+oras pull ghcr.io/medovarszki/katzenmaster:0.1.0
+```
+
 Fejlesztői változat: minden `main`-re pusholt commit után a GitHub Actions `build`
 workflow mindkét platformra elkészíti a programot. GitHub → **Actions** → **build** →
 a legutóbbi zöld futás, lent az **Artifacts** részben:
@@ -157,6 +185,11 @@ git push origin v0.2.0
 3. Elkészül a `SHA256SUMS.txt`, majd létrejön a `katzenmaster v0.2.0` nevű Release a
    három fájllal és a changelog-szakasszal. Gombos kiadásnál a `v0.2.0` taget is ez a
    lépés hozza létre, azon a commiton, amelyre a futás indult.
+4. A `package` workflow letölti a release fájljait, ellenőrzi őket a
+   `SHA256SUMS.txt`-vel, és feltölti őket a GitHub Packages-be
+   (`ghcr.io/medovarszki/katzenmaster:0.2.0`, előzetes kiadásnál `latest` címke nélkül).
+   Egy már meglévő kiadás kézzel is feltölthető: **Actions → package → Run workflow**,
+   a tag mezőbe például `v0.1.0`.
 
 Kötőjeles verzió (például `0.2.0-rc1`) előzetes kiadásként (pre-release) jelenik meg.
 Ha a futás a release előtt elbukik, nem jön létre se tag, se kiadás: javítsd a hibát a
@@ -250,7 +283,8 @@ valódi asztal. 2x felbontású, hogy HiDPI kijelzőn is éles legyen.
 | `katzenmaster/snapshot.py` | A `--snapshot` mód |
 | `packaging/build.py`, `packaging/katzenmaster.spec` | Futtatható állomány készítése (PyInstaller) |
 | `packaging/release.py` | Kiadás előtti ellenőrzés (tag, verzió, changelog) és a release-jegyzet kiolvasása |
-| `.github/workflows/build.yml` | CI: tesztek és build Windowsra és Linuxra, release tagre |
+| `.github/workflows/build.yml` | CI: tesztek és build Windowsra és Linuxra, kiadás gombra vagy tagre |
+| `.github/workflows/package.yml` | Egy kiadás fájljai a GitHub Packages-be (ghcr.io, OCI) |
 | `CHANGELOG.md` | Változások kiadásonként; ebből készül a release leírása |
 
 ## Platformok és ismert korlátok

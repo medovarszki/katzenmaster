@@ -141,3 +141,14 @@ jobs:
             artifacts/katzenmaster-windows-x86_64.exe
             artifacts/katzenmaster-linux-x86_64.tar.gz
             artifacts/SHA256SUMS.txt
+
+  # the same files in GitHub Packages (ghcr.io); a separate workflow so that an
+  # existing release can be published there by hand as well
+  package:
+    needs: [plan, release]
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/package.yml
+    with:
+      tag: ${{ needs.plan.outputs.tag }}
