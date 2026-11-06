@@ -2,7 +2,8 @@
 
     python packaging/release.py check v0.2.0   # tag matches katzenmaster.__version__ and
                                                 # CHANGELOG.md has a section for it
-    python packaging/release.py notes v0.2.0   # print that CHANGELOG section (release body)
+    python packaging/release.py notes v0.2.0   # print that CHANGELOG section (release body),
+                                                # always UTF-8 encoded
 
 Exits with status 1 and a message on stderr if the check fails.
 """
@@ -74,7 +75,10 @@ def main(argv: list[str]) -> int:
         print(f"release check failed: {e}", file=sys.stderr)
         return 1
     if command == "notes":
-        sys.stdout.write(notes)
+        # always UTF-8, whatever the console encoding is (cp1252 on Windows cannot encode "ő")
+        sys.stdout.flush()
+        sys.stdout.buffer.write(notes.encode("utf-8"))
+        sys.stdout.buffer.flush()
     else:
         print(f"release check ok: {tag}")
     return 0

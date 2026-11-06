@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess
 import sys
@@ -74,12 +75,20 @@ def test_current_version_is_releasable():
 def test_cli_check_and_notes():
     script = str(ROOT / "packaging" / "release.py")
     tag = f"v{katzenmaster.__version__}"
-    ok = subprocess.run([sys.executable, script, "check", tag], capture_output=True, text=True)
+    # a Windows console encoding that has no "ő": the notes must still come out as UTF-8
+    env = dict(os.environ, PYTHONIOENCODING="cp1252", PYTHONUTF8="0")
+
+    def cli(*args):
+        return subprocess.run([sys.executable, script, *args], capture_output=True, env=env)
+
+    ok = cli("check", tag)
     assert ok.returncode == 0, ok.stderr
-    notes = subprocess.run([sys.executable, script, "notes", tag], capture_output=True, text=True)
-    assert notes.returncode == 0 and notes.stdout == release.check(tag)
-    bad = subprocess.run([sys.executable, script, "check", "v999.0.0"], capture_output=True, text=True)
-    assert bad.returncode == 1 and "does not match" in bad.stderr
+    notes = cli("notes", tag)
+    assert notes.returncode == 0, notes.stderr
+    assert notes.stdout.decode("utf-8").replace("\r\n", "\n") == release.check(tag)
+    assert "ő".encode("utf-8") in notes.stdout  # the real changelog has Hungarian accents
+    bad = cli("check", "v999.0.0")
+    assert bad.returncode == 1 and b"does not match" in bad.stderr
 
 
 def test_version_flag():
