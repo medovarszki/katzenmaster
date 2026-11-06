@@ -3,7 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PySide6.QtGui import QImage
+from PySide6.QtGui import QColor, QImage
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -34,3 +34,20 @@ def test_snapshot_cli_writes_pngs(tmp_path):
     timeline = (tmp_path / "timeline.txt").read_text()
     for word in ("sit", "walk", "blink", "sleep", "chase", "stretch", "yawn", "groom"):
         assert word in timeline
+
+
+def test_readme_screenshot_script(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("make_screenshot", ROOT / "docs" / "make_screenshot.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    out = mod.render(tmp_path / "shot.png")
+    img = QImage(str(out))
+    assert (img.width(), img.height()) == (mod.WIDTH * mod.DPR, mod.HEIGHT * mod.DPR)
+    # the cat stands on the taskbar: its bottom outline row is right above the bar
+    bar_top = (mod.HEIGHT - mod.TASKBAR) * mod.DPR
+    cat_cols = range(mod.CAT_X * mod.DPR, (mod.CAT_X + 96) * mod.DPR)
+    outline = QColor(43, 29, 22)
+    assert any(img.pixelColor(x, bar_top - 1) == outline for x in cat_cols)
+    assert (ROOT / "docs" / "screenshot.png").is_file()  # the committed picture exists

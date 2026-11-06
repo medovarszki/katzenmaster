@@ -1,5 +1,10 @@
 # katzenmaster
 
+<p align="center">
+  <img src="docs/screenshot.png" width="480"
+       alt="A pixel art vörös cirmos macska ül a tálca fölött; jobb oldalt a tálcán a program ikonja">
+</p>
+
 Egy pixel art macska, aki a képernyő alján él. Ül, néha pislog, sétál a képernyő
 egyik szélétől a másikig, nyújtózik, ásít és mosakszik (a mancsát nyalogatja). Ha
 sokáig nem foglalkoznak vele, ásít egyet és elalszik, és ha magától ébred,
@@ -219,6 +224,10 @@ Minden időzítés és méret a `katzenmaster/config.py` fájlban van:
 - `CURSOR_NEAR_RADIUS`, `REACT_COOLDOWN`: mikor számít közelinek a kurzor, és mennyi szünet van két reakció között
 
 A sprite sheet az `assets/sprites/generate_sprites.py` futtatásával generálható újra.
+
+A README képe a `docs/make_screenshot.py` futtatásával készül újra (`docs/screenshot.png`).
+A macskát az igazi ablak rajzolja ki; a háttérkép és a tálca csak illusztráció, nem
+valódi asztal. 2x felbontású, hogy HiDPI kijelzőn is éles legyen.
 
 ## Felépítés
 
