@@ -7,6 +7,7 @@ import logging
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
+from . import __version__
 from .sprites import SpriteSheet
 
 log = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ class CatTray:
         self.quit_action = self.menu.addAction(QUIT_TEXT)
         self.quit_action.triggered.connect(app.quit)
         self.icon = QSystemTrayIcon(tray_icon(sheet), app)
-        self.icon.setToolTip("katzenmaster")
+        self.icon.setToolTip(f"katzenmaster {__version__}")
         self.icon.setContextMenu(self.menu)
         if not QSystemTrayIcon.isSystemTrayAvailable():
             log.warning("no system tray available: the quit menu will not be visible; "

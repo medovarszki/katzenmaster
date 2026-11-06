@@ -9,6 +9,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from . import __version__
+
 
 def _ensure_std_streams() -> Path | None:
     """A windowed (no console) executable has ``sys.stdout``/``sys.stderr`` set to None.
@@ -30,9 +32,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="render every state headless (offscreen) into PNG files and exit")
     parser.add_argument("--out", type=Path, default=Path("out"), help="output folder for --snapshot")
     parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    log_file = _ensure_std_streams()  # before parsing: --version / --help print to stdout
     args = parser.parse_args(argv)
 
-    log_file = _ensure_std_streams()
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
                         **({"filename": str(log_file), "filemode": "w", "encoding": "utf-8"}

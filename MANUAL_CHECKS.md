@@ -31,7 +31,7 @@ időzítéseket, például `SLEEP_AFTER = (10.0, 15.0)`. Utána állítsd vissza
 |---|---|---|
 | E1 | Csomagold ki a zipet, és indítsd el dupla kattintással a `katzenmaster-windows-x86_64.exe` fájlt. | Ha megjelenik a SmartScreen ablak: **További információ → Futtatás mindenképp**. Pár másodperc múlva megjelenik a macska. **Nem** nyílik konzolablak. |
 | E2 | Nézd meg az exe ikonját az Intézőben. | A pixeles ülő macska látszik, nem az alapértelmezett Python- vagy PyInstaller-ikon. |
-| E3 | Nyisd meg a `%TEMP%\katzenmaster.log` fájlt (Win+R → `%TEMP%`). | Benne van az `available geometry ...` és a `katzenmaster running on platform 'windows'` sor. |
+| E3 | Nyisd meg a `%TEMP%\katzenmaster.log` fájlt (Win+R → `%TEMP%`). | Benne van az `available geometry ...` és a `katzenmaster 0.1.0 running on platform 'windows'` sor (a verziószám a letöltött kiadásé). |
 | E4 | Végezd el a W1–W13 pontokat az exével. | Ugyanaz az eredmény, mint forrásból futtatva. |
 | E5 | Lépj ki a tálcamenüből, majd nézd meg a Feladatkezelőt. | Nem marad futó `katzenmaster` folyamat. |
 

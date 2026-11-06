@@ -63,6 +63,7 @@ További kapcsolók:
 | `--snapshot` | Képernyő nélkül (`QT_QPA_PLATFORM=offscreen`) lerenderel minden állapotot, és kilép |
 | `--out MAPPA` | A `--snapshot` kimeneti mappája (alapértelmezés: `out/`) |
 | `-v` | Részletes (debug) naplózás |
+| `--version` | Kiírja a verziószámot, és kilép |
 
 A `--snapshot` kimenete:
 
@@ -79,23 +80,74 @@ készül, a sprite-ok benne vannak.
 
 ### Letöltés a GitHubról (ajánlott)
 
-Minden `main`-re pusholt commit után a GitHub Actions `build` workflow mindkét
-platformra elkészíti a programot:
+A kiadások a GitHub **Releases** oldalán vannak:
+<https://github.com/medovarszki/katzenmaster/releases>. Mindegyikhez három fájl
+tartozik:
 
-1. GitHub → **Actions** → **build** → a legutóbbi zöld futás.
-2. Lent, az **Artifacts** részben:
-   - `katzenmaster-windows-x86_64`: egy zip, benne a `katzenmaster-windows-x86_64.exe`;
-   - `katzenmaster-linux-x86_64`: egy zip, benne a `katzenmaster-linux-x86_64.tar.gz`.
+- `katzenmaster-windows-x86_64.exe`: Windows 10/11;
+- `katzenmaster-linux-x86_64.tar.gz`: Linux x86_64;
+- `SHA256SUMS.txt`: ellenőrzőösszegek.
 
-Ha `v`-vel kezdődő taget pusholsz, a workflow GitHub Release-t is készít, és a két
-fájl ott is letölthető lesz:
+A legújabb kiadás ezekről az állandó címekről is letölthető:
+
+- <https://github.com/medovarszki/katzenmaster/releases/latest/download/katzenmaster-windows-x86_64.exe>
+- <https://github.com/medovarszki/katzenmaster/releases/latest/download/katzenmaster-linux-x86_64.tar.gz>
+
+Linuxon a letöltés ellenőrzése (a két fájl ugyanabban a mappában legyen):
 
 ```bash
-git tag v0.1.0
+sha256sum -c --ignore-missing SHA256SUMS.txt
+```
+
+Fejlesztői változat: minden `main`-re pusholt commit után a GitHub Actions `build`
+workflow mindkét platformra elkészíti a programot. GitHub → **Actions** → **build** →
+a legutóbbi zöld futás, lent az **Artifacts** részben:
+
+- `katzenmaster-windows-x86_64`: egy zip, benne a `katzenmaster-windows-x86_64.exe`;
+- `katzenmaster-linux-x86_64`: egy zip, benne a `katzenmaster-linux-x86_64.tar.gz`.
+
+### Új kiadás készítése
+
+A verziószám egyetlen helyen van: `katzenmaster/__init__.py` (`__version__`). Ebből
+veszi a `pyproject.toml`, a `--version` kapcsoló, a tálcaikon felirata és a napló.
+
+1. Írd át a `__version__` értékét, például `0.2.0`-ra (szemantikus verziózás).
+2. Írj egy `## [0.2.0] - ÉÉÉÉ-HH-NN` szakaszt a `CHANGELOG.md`-be. Ez lesz a
+   GitHub Release leírása. A `pytest` elbukik, ha az aktuális verzióhoz nincs szakasz.
+3. Futtasd a teszteket, commitold és pushold a `main`-re.
+4. Tegyél rá taget, és pushold:
+
+```bash
+git tag v0.2.0
 ```
 
 ```bash
-git push origin v0.1.0
+git push origin v0.2.0
+```
+
+A tagre induló `build` futás:
+
+1. ellenőrzi, hogy a tag, a `__version__` és a `CHANGELOG.md` egyezik
+   (`packaging/release.py check`); ha nem, a build el sem indul;
+2. lefuttatja a teszteket, és Windowson és Linuxon is lebuildeli és smoke-teszteli a
+   programot;
+3. elkészíti a `SHA256SUMS.txt`-t, és létrehozza a `katzenmaster v0.2.0` nevű
+   Release-t a három fájllal és a changelog-szakasszal.
+
+Kötőjeles tag (például `v0.2.0-rc1`) előzetes kiadásként (pre-release) jelenik meg.
+Ha a tagre induló futás elbukik, javítsd a hibát a `main`-en, majd töröld és tedd fel
+újra a taget:
+
+```bash
+git push origin :refs/tags/v0.2.0
+```
+
+```bash
+git tag -f v0.2.0
+```
+
+```bash
+git push origin v0.2.0
 ```
 
 ### Saját gépen
@@ -181,7 +233,9 @@ A sprite sheet az `assets/sprites/generate_sprites.py` futtatásával generálha
 | `katzenmaster/app.py` | Az elemek összekötése |
 | `katzenmaster/snapshot.py` | A `--snapshot` mód |
 | `packaging/build.py`, `packaging/katzenmaster.spec` | Futtatható állomány készítése (PyInstaller) |
+| `packaging/release.py` | Kiadás előtti ellenőrzés (tag, verzió, changelog) és a release-jegyzet kiolvasása |
 | `.github/workflows/build.yml` | CI: tesztek és build Windowsra és Linuxra, release tagre |
+| `CHANGELOG.md` | Változások kiadásonként; ebből készül a release leírása |
 
 ## Platformok és ismert korlátok
 

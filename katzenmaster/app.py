@@ -10,7 +10,7 @@ import sys
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
 
-from . import config
+from . import __version__, config
 from .brain import CatBrain, ground_position
 from .sprites import SpriteSheet, load_meta
 from .tray import CatTray
@@ -60,5 +60,5 @@ def run() -> int:
     cat.start()
     # Ctrl+C in the terminal also quits (the 30 fps timer lets Python handle the signal)
     signal.signal(signal.SIGINT, lambda *_: app.quit())
-    log.info("katzenmaster running on platform %r", app.platformName())
+    log.info("katzenmaster %s running on platform %r", __version__, app.platformName())
     return app.exec()

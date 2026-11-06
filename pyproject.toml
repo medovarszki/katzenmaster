@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "katzenmaster"
-version = "0.1.0"
+dynamic = ["version"]
 description = "A tiny pixel-art cat that lives at the bottom of your screen."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,6 +16,9 @@ build = ["pyinstaller>=6.10"]
 
 [tool.setuptools]
 packages = ["katzenmaster"]
+
+[tool.setuptools.dynamic]
+version = {attr = "katzenmaster.__version__"}  # single source of truth for the version
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
