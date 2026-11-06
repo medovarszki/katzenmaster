@@ -116,11 +116,23 @@ a legutóbbi zöld futás, lent az **Artifacts** részben:
 A verziószám egyetlen helyen van: `katzenmaster/__init__.py` (`__version__`). Ebből
 veszi a `pyproject.toml`, a `--version` kapcsoló, a tálcaikon felirata és a napló.
 
+**1. Előkészítés** (commit a `main`-re):
+
 1. Írd át a `__version__` értékét, például `0.2.0`-ra (szemantikus verziózás).
 2. Írj egy `## [0.2.0] - ÉÉÉÉ-HH-NN` szakaszt a `CHANGELOG.md`-be. Ez lesz a
    GitHub Release leírása. A `pytest` elbukik, ha az aktuális verzióhoz nincs szakasz.
 3. Futtasd a teszteket, commitold és pushold a `main`-re.
-4. Tegyél rá taget, és pushold:
+
+**2. Kiadás a GitHubon, gombnyomásra** (böngészőből vagy telefonról is):
+
+1. GitHub → **Actions** → bal oldalt **build** → jobb oldalt **Run workflow**.
+2. A *Use workflow from* listában maradjon a `main`.
+3. A verzió mezőbe írd be: `0.2.0` (a `v` előtag elhagyható).
+4. **Run workflow**.
+
+Üres verzió mezővel a gomb csak buildel, kiadás nélkül.
+
+**Vagy tag pusholásával**, saját gépről:
 
 ```bash
 git tag v0.2.0
@@ -130,30 +142,25 @@ git tag v0.2.0
 git push origin v0.2.0
 ```
 
-A tagre induló `build` futás:
+**Mi történik ezután** (kb. 3 perc):
 
-1. ellenőrzi, hogy a tag, a `__version__` és a `CHANGELOG.md` egyezik
-   (`packaging/release.py check`); ha nem, a build el sem indul;
-2. lefuttatja a teszteket, és Windowson és Linuxon is lebuildeli és smoke-teszteli a
-   programot;
-3. elkészíti a `SHA256SUMS.txt`-t, és létrehozza a `katzenmaster v0.2.0` nevű
-   Release-t a három fájllal és a changelog-szakasszal.
+1. A `plan` lépés még a buildek előtt ellenőrzi
+   (`packaging/release.py plan`):
+   - a tag, a `__version__` és a `CHANGELOG.md` egyezik;
+   - gombos kiadásnál a futás a `main` ágon indult;
+   - gombos kiadásnál a tag még nem létezik, így meglévő kiadás nem íródik felül.
 
-Kötőjeles tag (például `v0.2.0-rc1`) előzetes kiadásként (pre-release) jelenik meg.
-Ha a tagre induló futás elbukik, javítsd a hibát a `main`-en, majd töröld és tedd fel
-újra a taget:
+   Ha valami nem stimmel, a futás itt megáll, és a hibaüzenet megmondja, mit kell
+   javítani.
+2. Lefutnak a tesztek, és Windowson és Linuxon is elkészül és smoke-tesztelve van a
+   program.
+3. Elkészül a `SHA256SUMS.txt`, majd létrejön a `katzenmaster v0.2.0` nevű Release a
+   három fájllal és a changelog-szakasszal. Gombos kiadásnál a `v0.2.0` taget is ez a
+   lépés hozza létre, azon a commiton, amelyre a futás indult.
 
-```bash
-git push origin :refs/tags/v0.2.0
-```
-
-```bash
-git tag -f v0.2.0
-```
-
-```bash
-git push origin v0.2.0
-```
+Kötőjeles verzió (például `0.2.0-rc1`) előzetes kiadásként (pre-release) jelenik meg.
+Ha a futás a release előtt elbukik, nem jön létre se tag, se kiadás: javítsd a hibát a
+`main`-en, és nyomd meg újra a gombot.
 
 ### Saját gépen
 

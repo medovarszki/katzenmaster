@@ -98,11 +98,78 @@ def test_version_flag():
     assert res.stdout.strip() == f"katzenmaster {katzenmaster.__version__}"
 
 
+def _workflow():
+    return (ROOT / ".github" / "workflows" / "build.yml").read_text(encoding="utf-8")
+
+
 def test_workflow_releases_what_the_build_produces():
-    wf = (ROOT / ".github" / "workflows" / "build.yml").read_text(encoding="utf-8")
+    wf = _workflow()
     assert 'tags: ["v*"]' in wf
-    assert "packaging/release.py check" in wf and "packaging/release.py notes" in wf
+    assert "packaging/release.py plan" in wf and "packaging/release.py notes" in wf
     built = set(re.findall(r"file: dist/(\S+)", wf))
     assert built == {"katzenmaster-windows-x86_64.exe", "katzenmaster-linux-x86_64.tar.gz"}
     released = set(re.findall(r"artifacts/(katzenmaster-\S+|SHA256SUMS\.txt)$", wf, re.MULTILINE))
     assert released == built | {"SHA256SUMS.txt"}
+
+
+def test_workflow_has_a_run_workflow_release_form():
+    wf = _workflow()
+    assert re.search(r"workflow_dispatch:\n\s+inputs:\n\s+version:", wf)
+    # the free-text field only reaches scripts through env (no script injection)
+    run_lines = [ln for ln in wf.splitlines() if "run:" in ln or ln.startswith(" " * 10)]
+    assert not any("inputs.version" in ln for ln in run_lines if "INPUT_VERSION:" not in ln)
+    assert "INPUT_VERSION: ${{ inputs.version }}" in wf
+    # build waits for the checks; release only when plan says so
+    assert "needs: plan" in wf and "needs: [plan, build]" in wf
+    assert "if: needs.plan.outputs.tag != ''" in wf
+
+
+# ------------------------------------------------------------------ plan
+V = katzenmaster.__version__
+
+
+def test_plain_pushes_and_manual_builds_do_not_release():
+    assert release.plan("push", "refs/heads/main", "main", "") == ""
+    assert release.plan("workflow_dispatch", "refs/heads/main", "main", "") == ""
+    assert release.plan("workflow_dispatch", "refs/heads/main", "main", "   ") == ""
+    assert release.plan("pull_request", "refs/pull/1/merge", "1/merge", "") == ""
+
+
+def test_pushed_tag_releases():
+    assert release.plan("push", f"refs/tags/v{V}", f"v{V}", "") == f"v{V}"
+    with pytest.raises(release.ReleaseError, match="does not match"):
+        release.plan("push", "refs/tags/v999.0.0", "v999.0.0", "")
+
+
+@pytest.mark.parametrize("typed", [V, f"v{V}", f" {V} "])
+def test_manual_release_from_main(typed):
+    assert release.plan("workflow_dispatch", "refs/heads/main", "main", typed) == f"v{V}"
+
+
+def test_manual_release_checks_version_and_branch():
+    with pytest.raises(release.ReleaseError, match="does not match"):
+        release.plan("workflow_dispatch", "refs/heads/main", "main", "999.0.0")
+    with pytest.raises(release.ReleaseError, match="not like"):
+        release.plan("workflow_dispatch", "refs/heads/main", "main", "latest")
+    with pytest.raises(release.ReleaseError, match="from main"):
+        release.plan("workflow_dispatch", "refs/heads/feature", "feature", V)
+
+
+def test_cli_plan_writes_github_output(tmp_path):
+    script = str(ROOT / "packaging" / "release.py")
+    out = tmp_path / "out.txt"
+    base = dict(os.environ, GITHUB_OUTPUT=str(out), GITHUB_EVENT_NAME="workflow_dispatch",
+                GITHUB_REF="refs/heads/main", GITHUB_REF_NAME="main")
+
+    def plan(**env):
+        out.write_text("")
+        res = subprocess.run([sys.executable, script, "plan"], capture_output=True, text=True,
+                             env=dict(base, **env))
+        return res, out.read_text()
+
+    res, written = plan(INPUT_VERSION=V)
+    assert res.returncode == 0 and written == f"tag=v{V}\n"
+    res, written = plan(INPUT_VERSION="")
+    assert res.returncode == 0 and written == "tag=\n"
+    res, written = plan(INPUT_VERSION="999.0.0")
+    assert res.returncode == 1 and "does not match" in res.stderr and written == ""

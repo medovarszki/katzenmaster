@@ -3,22 +3,58 @@ name: build
 # Builds a single-file executable for Windows and Linux on every push to main.
 # Download them from the run's "Artifacts" section.
 #
-# Release: bump katzenmaster/__init__.py, add a "## [x.y.z]" section to CHANGELOG.md,
-# commit, then push a tag "vx.y.z". The tag run checks that tag, version and changelog
-# agree, builds both executables and publishes them as a GitHub Release (asset names
-# carry no version, so .../releases/latest/download/<name> always points to the newest).
+# Release (bump katzenmaster/__init__.py and add a "## [x.y.z]" section to
+# CHANGELOG.md on main first), either way:
+#   * Actions -> build -> "Run workflow" on main, with the version filled in, or
+#   * push a tag "vx.y.z".
+# The "plan" job checks that tag, version and changelog agree (and, for a manual run,
+# that the tag does not exist yet) before anything is built. Then both executables are
+# built and published as a GitHub Release; a manual run creates the tag on the commit
+# it ran on. Asset names carry no version, so .../releases/latest/download/<name>
+# always points to the newest release.
 on:
   push:
     branches: [main]
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Kiadás verziója, pl. 0.2.0 (üresen: csak build, kiadás nélkül)"
+        required: false
+        default: ""
+        type: string
 
 concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
+  group: build-${{ github.ref }}-${{ github.event_name }}
+  # a newer push to main supersedes an older build; tag and manual (release) runs finish
+  cancel-in-progress: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.plan.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Release or plain build?
+        id: plan
+        env:
+          INPUT_VERSION: ${{ inputs.version }}  # via env, never pasted into the script
+        run: python3 packaging/release.py plan
+
+      - name: Tag must not exist yet (manual release)
+        if: github.event_name == 'workflow_dispatch' && steps.plan.outputs.tag != ''
+        env:
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::error::$TAG already exists; bump the version for a new release"
+            exit 1
+          fi
+
   build:
+    needs: plan
     strategy:
       fail-fast: false
       matrix:
@@ -39,10 +75,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Check tag, version and changelog (release only)
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: python packaging/release.py check "${{ github.ref_name }}"
 
       - name: Install Qt system libraries (Linux)
         if: runner.os == 'Linux'
@@ -69,16 +101,18 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [plan, build]
+    if: needs.plan.outputs.tag != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      TAG: ${{ needs.plan.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Release notes from CHANGELOG.md
-        run: python3 packaging/release.py notes "${{ github.ref_name }}" > release-notes.md
+        run: python3 packaging/release.py notes "$TAG" > release-notes.md
 
       - uses: actions/download-artifact@v4
         with:
@@ -94,11 +128,14 @@ jobs:
           sha256sum katzenmaster-windows-x86_64.exe katzenmaster-linux-x86_64.tar.gz > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
+      # creates the tag on this run's commit if it does not exist (manual release)
       - uses: softprops/action-gh-release@v2
         with:
-          name: katzenmaster ${{ github.ref_name }}
+          tag_name: ${{ needs.plan.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: katzenmaster ${{ needs.plan.outputs.tag }}
           body_path: release-notes.md
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(needs.plan.outputs.tag, '-') }}
           fail_on_unmatched_files: true
           files: |
             artifacts/katzenmaster-windows-x86_64.exe

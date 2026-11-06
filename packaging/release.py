@@ -4,12 +4,19 @@
                                                 # CHANGELOG.md has a section for it
     python packaging/release.py notes v0.2.0   # print that CHANGELOG section (release body),
                                                 # always UTF-8 encoded
+    python packaging/release.py plan           # in CI: decide whether this run releases
 
-Exits with status 1 and a message on stderr if the check fails.
+``plan`` reads GITHUB_EVENT_NAME, GITHUB_REF, GITHUB_REF_NAME and INPUT_VERSION (the
+"Run workflow" form field). A pushed ``v*`` tag, or a manual run on ``main`` with a
+version filled in, is a release: the tag is checked like ``check`` does, printed and
+written as ``tag=...`` to $GITHUB_OUTPUT. Otherwise the tag is empty (build only).
+
+Exits with status 1 and a message on stderr if a check fails.
 """
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -64,12 +71,46 @@ def check(tag: str) -> str:
     return changelog_section(version)
 
 
+RELEASE_BRANCH = "main"
+
+
+def plan(event: str, ref: str, ref_name: str, input_version: str) -> str:
+    """The tag this workflow run releases, or "" for a plain build."""
+    if ref.startswith("refs/tags/"):
+        tag = ref_name
+    elif event == "workflow_dispatch" and input_version.strip():
+        if ref != f"refs/heads/{RELEASE_BRANCH}":
+            raise ReleaseError(f"releases are made from {RELEASE_BRANCH}, not {ref}; "
+                               f"choose '{RELEASE_BRANCH}' in the 'Use workflow from' list")
+        version = input_version.strip()
+        tag = version if version.startswith("v") else f"v{version}"
+    else:
+        return ""
+    check(tag)
+    return tag
+
+
+def _write_output(name: str, value: str) -> None:
+    path = os.environ.get("GITHUB_OUTPUT")
+    if path:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"{name}={value}\n")
+
+
 def main(argv: list[str]) -> int:
-    if len(argv) != 2 or argv[0] not in ("check", "notes"):
+    valid = (len(argv) == 2 and argv[0] in ("check", "notes")) or argv == ["plan"]
+    if not valid:
         print(__doc__, file=sys.stderr)
         return 2
-    command, tag = argv
     try:
+        if argv[0] == "plan":
+            env = os.environ
+            tag = plan(env.get("GITHUB_EVENT_NAME", ""), env.get("GITHUB_REF", ""),
+                       env.get("GITHUB_REF_NAME", ""), env.get("INPUT_VERSION", ""))
+            _write_output("tag", tag)
+            print(f"release: {tag}" if tag else "no release: build only")
+            return 0
+        command, tag = argv
         notes = check(tag)
     except ReleaseError as e:
         print(f"release check failed: {e}", file=sys.stderr)
