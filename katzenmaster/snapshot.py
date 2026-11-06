@@ -6,7 +6,7 @@ Output (in ``out/`` by default):
 * ``strip_<state>.png`` -- the frames side by side, composited on a checkerboard
   (transparent pixels show the checkerboard; an opaque background would hide it)
 * ``contact_sheet.png`` -- all strips under each other, on checkerboard and on solid colour
-* ``timeline.txt`` -- state changes of a seeded 3 minute simulation with a scripted cursor
+* ``timeline.txt`` -- state changes of a seeded 6 minute simulation with a scripted cursor
 """
 
 from __future__ import annotations
@@ -30,6 +30,10 @@ SHOTS = [
     ("walk_right", State.WALK, RIGHT),
     ("walk_left", State.WALK, LEFT),
     ("chase_left", State.CHASE, LEFT),
+    ("stretch_right", State.STRETCH, RIGHT),
+    ("stretch_left", State.STRETCH, LEFT),
+    ("yawn", State.YAWN, RIGHT),
+    ("groom", State.GROOM, RIGHT),
 ]
 
 
@@ -71,11 +75,11 @@ def capture_state(cat, state: State, facing: int, count: int | None = None) -> l
     return frames
 
 
-def simulate_timeline(cat, seconds: float = 240.0, dt: float = 1 / 30) -> list[str]:
+def simulate_timeline(cat, seconds: float = 360.0, dt: float = 1 / 30) -> list[str]:
     """Run the real state machine with a scripted cursor; return the state changes.
 
-    Script: at t=40 s the cursor stops 150 px right of the cat for 4 s (the cat should
-    walk over and sit down); 5 s after the cat first falls asleep the cursor hovers
+    Script: the first time the cat sits after t=40 s, the cursor stops 150 px right of
+    it for 4 s (the cat should walk over and sit down); 5 s after the cat first falls asleep the cursor hovers
     over it for 1 s (the cat should wake up and sit).
     """
     brain = cat.brain
@@ -85,10 +89,10 @@ def simulate_timeline(cat, seconds: float = 240.0, dt: float = 1 / 30) -> list[s
     slept_at = None
     woken = False
     while t < seconds:
-        if hover is None and 40 <= t < 41:
+        if hover is None and t >= 40 and brain.state is State.SIT:
             cx, cy = brain.center
             hover = ((cx + 150, cy - 30), t + 4)
-            lines.append(f"{t:7.2f}s  -- cursor appears 150 px right of the cat")
+            lines.append(f"{t:7.2f}s  -- cursor appears 150 px right of the sitting cat")
         if brain.state is State.SLEEP and slept_at is None:
             slept_at = t
         if slept_at is not None and not woken and t >= slept_at + 5:
@@ -105,7 +109,7 @@ def simulate_timeline(cat, seconds: float = 240.0, dt: float = 1 / 30) -> list[s
         cur = (brain.state.value, brain.facing)
         if cur != last:
             facing = "right" if brain.facing > 0 else "left"
-            lines.append(f"{t:7.2f}s  {brain.state.value:<6} facing={facing:<5} x={brain.x:7.1f}")
+            lines.append(f"{t:7.2f}s  {brain.state.value:<7} facing={facing:<5} x={brain.x:7.1f}")
             last = cur
         t += dt
     return lines

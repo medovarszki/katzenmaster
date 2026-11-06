@@ -26,10 +26,16 @@ MAX_DT = 0.1  # clamp for a single simulation step (e.g. after suspend)
 
 # --- behaviour timings (min, max) ------------------------------------------
 SIT_ACTION_INTERVAL = (3.0, 8.0)  # how long to sit before deciding what to do next
-WALK_PROBABILITY = 0.4  # chance to start walking when a sit interval ends
+# What the cat does when a sit interval ends (checked in this order; whatever is left
+# over means it just keeps sitting).
+WALK_PROBABILITY = 0.4  # walk to the left or right
+STRETCH_PROBABILITY = 0.1  # stretch (also always after waking up on its own)
+YAWN_PROBABILITY = 0.08  # yawn (also always right before falling asleep)
+GROOM_PROBABILITY = 0.15  # lick a paw for a while
+GROOM_DURATION = (3.0, 7.0)
 BLINK_INTERVAL = (4.0, 10.0)  # time between blinks while sitting
 # Awake time without any cursor interaction after which the cat, the next time it
-# decides what to do while sitting, takes a nap instead.
+# decides what to do while sitting, yawns and takes a nap instead.
 SLEEP_AFTER = (60.0, 120.0)
 SLEEP_DURATION = (30.0, 90.0)  # how long a nap lasts if nobody disturbs it
 WALK_DISTANCE = (120.0, 600.0)  # how far a walk goes (px), turning at the edges

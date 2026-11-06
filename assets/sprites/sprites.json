@@ -26,6 +26,25 @@
       "fps": 10,
       "loop": true,
       "faces": "right"
+    },
+    "stretch": {
+      "row": 4,
+      "frames": 6,
+      "fps": 4,
+      "loop": false,
+      "faces": "right"
+    },
+    "yawn": {
+      "row": 5,
+      "frames": 6,
+      "fps": 5,
+      "loop": false
+    },
+    "groom": {
+      "row": 6,
+      "frames": 4,
+      "fps": 4,
+      "loop": true
     }
   }
 }

@@ -46,7 +46,7 @@ időzítéseket, például `SLEEP_AFTER = (10.0, 15.0)`. Utána állítsd vissza
 | W5 | Nézd meg a tálcát, és nyomj Alt-Tab, majd Win-Tab billentyűt. | A macskához nem tartozik tálcagomb, és nem szerepel az Alt-Tab vagy a Feladatnézet listájában. |
 | W6 | Keresd meg a tálcaikont a rendszertálcán (a „^” alatt is lehet). | Ott van a macska ikonja, élesen. A jobb gombos menüben egyetlen pont van: **Kilépés**. |
 | W7 | Válaszd a **Kilépés** pontot. | A macska eltűnik, a folyamat leáll, és a tálcaikon is eltűnik. |
-| W8 | Indítsd újra, és figyeld 2–3 percig. | Ül, néha pislog, jobbra-balra sétál (balra menet balra néz), a képernyő szélén megfordul és nem lóg ki. Kurzor nélkül 1–2 perc után elalszik („z” betűk). |
+| W8 | Indítsd újra, és figyeld 2–3 percig. | Ül, néha pislog, jobbra-balra sétál (balra menet balra néz), a képernyő szélén megfordul és nem lóg ki. Időnként helyben nyújtózik (jobbra vagy balra nézve, egyszer lejátszva), ásít, vagy egy ideig a mancsát nyalogatja. Kurzor nélkül 1–2 perc után ásít, majd elalszik („z” betűk). Ha magától ébred, először nyújtózik. |
 | W9 | Az alvó macska fölé vidd a kurzort, de ne kattints. | Felébred és leül. |
 | W10 | Várj kb. 5 másodpercet, majd vidd a kurzort 100–150 px-re a macska mellé, kicsit fölé. | A macska odasétál a kurzor alá, és leül. Ha a kurzor pont fölötte van, pislog. |
 | W11 | Kapcsold be a tálca automatikus elrejtését, vagy helyezd át a tálcát a képernyő tetejére vagy oldalára. | A macska követi az új `availableGeometry` alsó szélét. A naplóban megjelenik egy `available geometry ...` sor. |

@@ -21,6 +21,14 @@ def cfg_with(**overrides):
     return types.SimpleNamespace(**values)
 
 
+NO_EXTRAS = dict(STRETCH_PROBABILITY=0.0, YAWN_PROBABILITY=0.0, GROOM_PROBABILITY=0.0)
+
+
+def finish(brain, anim):
+    """Run until a non-looping animation has played through."""
+    run(brain, brain.specs[anim].duration + 0.1)
+
+
 def run(brain, seconds, cursor=None, record=None):
     for _ in range(int(seconds / DT)):
         brain.update(DT, cursor)
@@ -53,7 +61,8 @@ def test_visits_all_states_and_stays_in_bounds(meta):
     rec = []
     run(b, 600, record=rec)
     states = {s for s, _, _ in rec}
-    assert {State.SIT, State.BLINK, State.WALK, State.SLEEP} <= states
+    assert {State.SIT, State.BLINK, State.WALK, State.SLEEP,
+            State.STRETCH, State.YAWN, State.GROOM} <= states
     assert State.CHASE not in states  # only the cursor triggers chasing
     assert all(b.min_x <= x <= b.max_x for _, x, _ in rec)
 
@@ -65,7 +74,11 @@ def test_transitions_follow_the_rules(meta):
     allowed = {
         (State.SIT, State.BLINK), (State.BLINK, State.SIT),
         (State.SIT, State.WALK), (State.WALK, State.SIT),
-        (State.SIT, State.SLEEP), (State.SLEEP, State.SIT),
+        (State.SIT, State.STRETCH), (State.STRETCH, State.SIT),
+        (State.SIT, State.GROOM), (State.GROOM, State.SIT),
+        (State.SIT, State.YAWN), (State.YAWN, State.SIT),
+        (State.YAWN, State.SLEEP),  # only way to fall asleep
+        (State.SLEEP, State.STRETCH),  # waking up on its own
     }
     for (a, _, _), (c, _, _) in zip(rec, rec[1:]):
         if a is not c:
@@ -82,13 +95,17 @@ def test_blink_returns_to_sit(meta):
 
 def test_falls_asleep_after_long_awake_time_and_wakes_up(meta):
     cfg = cfg_with(WALK_PROBABILITY=0.0, SIT_ACTION_INTERVAL=(1, 1), SLEEP_AFTER=(10, 10),
-                   SLEEP_DURATION=(5, 5))
+                   SLEEP_DURATION=(5, 5), **NO_EXTRAS)
     b = make_brain(meta, cfg=cfg)
     run(b, 9.5)
     assert b.state in (State.SIT, State.BLINK)
     run(b, 1.6)
+    assert b.state is State.YAWN and b.animation == "yawn"  # yawns before the nap
+    finish(b, "yawn")
     assert b.state is State.SLEEP and b.animation == "sleep"
-    run(b, 5.2)
+    run(b, 5.0)
+    assert b.state is State.STRETCH  # stretches after waking up on its own
+    finish(b, "stretch")
     assert b.state is State.SIT
 
 
@@ -100,20 +117,22 @@ def test_walking_cat_still_gets_sleepy(meta):
     run(b, 60, record=rec)
     assert State.WALK in {s for s, _, _ in rec}
     first_sleep = next(i for i, (s, _, _) in enumerate(rec) if s is State.SLEEP)
-    assert rec[first_sleep - 1][0] in (State.SIT, State.BLINK)  # only falls asleep from sitting
-    assert first_sleep * DT >= 20
+    assert rec[first_sleep - 1][0] is State.YAWN  # always yawns right before the nap
+    first_yawn = next(i for i in range(first_sleep, 0, -1) if rec[i - 1][0] is not State.YAWN)
+    assert rec[first_yawn - 1][0] in (State.SIT, State.BLINK)  # ...and only from sitting
+    assert first_yawn * DT >= 20
 
 
 def test_cursor_interaction_keeps_cat_awake(meta):
     cfg = cfg_with(WALK_PROBABILITY=0.0, SIT_ACTION_INTERVAL=(1, 1), SLEEP_AFTER=(10, 10),
-                   BLINK_INTERVAL=(99, 99))
+                   BLINK_INTERVAL=(99, 99), **NO_EXTRAS)
     b = make_brain(meta, cfg=cfg)
     run(b, 8)
     b.update(DT, _cursor_near(b, 0))  # cursor right above -> blink, awake time reset
     assert b.awake < 1
     run(b, 8)
-    assert b.state is not State.SLEEP
-    run(b, 4)
+    assert b.state not in (State.YAWN, State.SLEEP)
+    run(b, 4 + meta.animations["yawn"].duration)
     assert b.state is State.SLEEP
 
 
@@ -142,11 +161,93 @@ def test_turns_around_at_edges(meta, start_x, facing, expected):
     assert b.mirrored == (expected == LEFT)
 
 
-def test_sit_and_sleep_are_never_mirrored(meta):
+def test_front_views_are_never_mirrored(meta):
     b = make_brain(meta)
-    for st in (State.SIT, State.SLEEP, State.BLINK):
+    for st in (State.SIT, State.SLEEP, State.BLINK, State.YAWN, State.GROOM):
         b.force_state(st, LEFT)
         assert not b.mirrored
+
+
+@pytest.mark.parametrize("facing", [LEFT, RIGHT])
+def test_stretch_is_mirrored_when_facing_left(meta, facing):
+    b = make_brain(meta)
+    b.force_state(State.STRETCH, facing)
+    assert b.animation == "stretch"
+    assert b.mirrored == (facing == LEFT)
+
+
+# ------------------------------------------------------------ stretch / yawn / groom
+def _only(**probabilities):
+    p = dict(WALK_PROBABILITY=0.0, **NO_EXTRAS)
+    p.update(probabilities)
+    return cfg_with(SIT_ACTION_INTERVAL=(1, 1), BLINK_INTERVAL=(99, 99), **p)
+
+
+def test_stretch_plays_once_in_place_then_sits(meta):
+    b = make_brain(meta, cfg=_only(STRETCH_PROBABILITY=1.0))
+    x0 = b.x
+    run(b, 1.1)
+    assert b.state is State.STRETCH and b.animation == "stretch"
+    finish(b, "stretch")
+    assert b.state is State.SIT
+    assert b.x == x0  # stretching does not move the cat
+
+
+def test_yawn_plays_once_then_sits(meta):
+    b = make_brain(meta, cfg=_only(YAWN_PROBABILITY=1.0))
+    run(b, 1.1)
+    assert b.state is State.YAWN and b.animation == "yawn"
+    finish(b, "yawn")
+    assert b.state is State.SIT  # not sleepy yet: no nap after this yawn
+
+
+def test_groom_loops_for_the_configured_time(meta):
+    b = make_brain(meta, cfg=_only(GROOM_PROBABILITY=1.0, GROOM_DURATION=(3, 3)))
+    run(b, 1.1)
+    assert b.state is State.GROOM and b.animation == "groom"
+    run(b, 2.8)
+    assert b.state is State.GROOM
+    run(b, 0.3)
+    assert b.state is State.SIT
+
+
+def test_action_probabilities_are_respected(meta):
+    b = make_brain(meta, seed=11, cfg=_only(WALK_PROBABILITY=0.25, STRETCH_PROBABILITY=0.25,
+                                            YAWN_PROBABILITY=0.25, GROOM_PROBABILITY=0.25,
+                                            SLEEP_AFTER=(1e9, 1e9)))
+    rec = []
+    run(b, 900, record=rec)
+    starts = [c for (a, _, _), (c, _, _) in zip(rec, rec[1:]) if a is not c and a is State.SIT]
+    counts = {s: starts.count(s) for s in (State.WALK, State.STRETCH, State.YAWN, State.GROOM)}
+    assert all(n >= 0.15 * len(starts) for n in counts.values()), counts
+    assert State.SLEEP not in starts
+
+
+def test_grooming_cat_reacts_to_cursor(meta):
+    b = make_brain(meta, cfg=_only(GROOM_PROBABILITY=1.0, GROOM_DURATION=(99, 99)))
+    run(b, 1.1)
+    assert b.state is State.GROOM
+    b.update(DT, _cursor_near(b, 120))
+    assert b.state is State.CHASE
+
+
+@pytest.mark.parametrize("state", [State.STRETCH, State.YAWN])
+def test_stretching_or_yawning_cat_finishes_first(meta, state):
+    b = make_brain(meta, cfg=cfg_with(SIT_ACTION_INTERVAL=(99, 99), BLINK_INTERVAL=(99, 99)))
+    b.force_state(state, RIGHT)
+    cursor = _cursor_near(b, 120)
+    b.update(DT, cursor)
+    assert b.state is state
+    reacted = []
+    run(b, meta.animations[state.value].duration + 0.2, cursor, record=reacted)
+    assert State.CHASE in {s for s, _, _ in reacted}  # reacts right after sitting down
+
+
+def test_woken_by_cursor_sits_without_stretching(meta):
+    b = make_brain(meta)
+    b.force_state(State.SLEEP)
+    b.update(DT, _cursor_near(b, 50))
+    assert b.state is State.SIT
 
 
 def test_huge_dt_is_clamped(meta):

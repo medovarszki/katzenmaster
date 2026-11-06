@@ -16,14 +16,15 @@ def test_snapshot_cli_writes_pngs(tmp_path):
     assert res.returncode == 0, res.stderr
     assert "offscreen" in res.stdout
     names = {p.name for p in tmp_path.iterdir()}
-    for state, n in [("sit", 4), ("blink", 4), ("sleep", 4), ("walk_right", 6), ("walk_left", 6)]:
+    for state, n in [("sit", 4), ("blink", 4), ("sleep", 4), ("walk_right", 6), ("walk_left", 6),
+                     ("stretch_right", 6), ("stretch_left", 6), ("yawn", 6), ("groom", 4)]:
         for i in range(n):
             assert f"{state}_{i}.png" in names
         assert f"strip_{state}.png" in names
     assert "contact_sheet.png" in names
 
     # raw frames are transparent around the cat, and consecutive frames differ
-    for state in ("sit", "sleep", "walk_right"):
+    for state in ("sit", "sleep", "walk_right", "stretch_right", "yawn", "groom"):
         a = QImage(str(tmp_path / f"{state}_0.png"))
         b = QImage(str(tmp_path / f"{state}_1.png"))
         assert a.hasAlphaChannel()
@@ -31,5 +32,5 @@ def test_snapshot_cli_writes_pngs(tmp_path):
         assert a != b
 
     timeline = (tmp_path / "timeline.txt").read_text()
-    for word in ("sit", "walk", "blink", "sleep", "chase"):
+    for word in ("sit", "walk", "blink", "sleep", "chase", "stretch", "yawn", "groom"):
         assert word in timeline

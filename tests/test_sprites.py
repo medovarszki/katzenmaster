@@ -4,7 +4,7 @@ from PySide6.QtGui import QImage
 from katzenmaster import config
 from katzenmaster.sprites import SpriteSheet, frame_rect, parse_meta
 
-REQUIRED = {"sit", "blink", "sleep", "walk"}
+REQUIRED = {"sit", "blink", "sleep", "walk", "stretch", "yawn", "groom"}
 
 
 def test_meta_has_required_animations(meta):
@@ -18,7 +18,10 @@ def test_loop_flags(meta):
     assert meta.animations["sit"].loop
     assert meta.animations["walk"].loop
     assert meta.animations["sleep"].loop
+    assert meta.animations["groom"].loop
     assert not meta.animations["blink"].loop
+    assert not meta.animations["stretch"].loop
+    assert not meta.animations["yawn"].loop
 
 
 def test_parse_meta_rejects_bad_values():
@@ -60,10 +63,11 @@ def test_nearest_neighbour_scaling(meta, sheet, anim):
                         assert big.pixel(x * s + dx, y * s + dy) == src
 
 
-def test_mirroring(meta, sheet):
-    for i in range(meta.animations["walk"].frames):
-        right = sheet.frame("walk", i).convertToFormat(QImage.Format.Format_ARGB32)
-        left = sheet.frame("walk", i, mirrored=True).convertToFormat(QImage.Format.Format_ARGB32)
+@pytest.mark.parametrize("anim", ["walk", "stretch"])
+def test_mirroring(meta, sheet, anim):
+    for i in range(meta.animations[anim].frames):
+        right = sheet.frame(anim, i).convertToFormat(QImage.Format.Format_ARGB32)
+        left = sheet.frame(anim, i, mirrored=True).convertToFormat(QImage.Format.Format_ARGB32)
         w = right.width()
         for y in range(0, right.height(), 7):
             for x in range(w):
@@ -98,6 +102,25 @@ def test_walk_faces_right(meta):
         left = sum(raw.pixelColor(x, y).alpha() > 0 for y in range(4, 16) for x in range(0, 16))
         right = sum(raw.pixelColor(x, y).alpha() > 0 for y in range(4, 16) for x in range(16, 32))
         assert right > left * 2
+
+
+@pytest.mark.parametrize("anim", ["walk", "stretch"])
+def test_side_view_head_is_on_the_right(meta, anim):
+    """All pink pixels (inner ears, nose) are in the right half, also when the head is low."""
+    pink = (240, 150, 170)
+    for i in range(meta.animations[anim].frames):
+        raw = _raw_frame(meta, anim, i)
+        xs = [x for y in range(32) for x in range(32)
+              if raw.pixelColor(x, y).getRgb()[:3] == pink and raw.pixelColor(x, y).alpha() > 0]
+        assert xs and min(xs) >= 16, (anim, i)
+
+
+def test_sheet_json_marks_side_views():
+    import json
+
+    data = json.loads(config.SPRITE_JSON.read_text(encoding="utf-8"))
+    faces = {name for name, a in data["animations"].items() if a.get("faces") == "right"}
+    assert faces == {"walk", "stretch"}
 
 
 def test_explicit_scale(sheet):

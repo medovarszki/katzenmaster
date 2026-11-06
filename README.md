@@ -1,7 +1,9 @@
 # katzenmaster
 
 Egy pixel art macska, aki a képernyő alján él. Ül, néha pislog, sétál a képernyő
-egyik szélétől a másikig, és ha sokáig nem foglalkoznak vele, elalszik. Ha a kurzor
+egyik szélétől a másikig, nyújtózik, ásít és mosakszik (a mancsát nyalogatja). Ha
+sokáig nem foglalkoznak vele, ásít egyet és elalszik, és ha magától ébred,
+nyújtózik. Ha a kurzor
 a közelébe ér, az alvó macska felébred és leül, az ülő macska pedig odasétál a
 kurzor alá.
 
@@ -68,7 +70,7 @@ A `--snapshot` kimenete:
 - `strip_<állapot>.png`: a képkockák egymás mellett, sakktábla-háttérre kompozitálva
   (ahol a sakktábla átlátszik, ott a kép valóban átlátszó)
 - `contact_sheet.png`: az összes állapot egy képen, sakktáblán és sima színen
-- `timeline.txt`: egy fix seedű, 4 perces szimuláció állapotváltásai szkriptelt kurzorral
+- `timeline.txt`: egy fix seedű, 6 perces szimuláció állapotváltásai szkriptelt kurzorral
 
 ## Futtatható állomány (Windows `.exe`, Linux bináris)
 
@@ -155,7 +157,11 @@ A tesztek képernyő nélkül futnak (`QT_QPA_PLATFORM=offscreen`).
 Minden időzítés és méret a `katzenmaster/config.py` fájlban van:
 
 - `SCALE`: egész szorzó, nearest-neighbor nagyítással (alapértelmezés 3, vagyis 96 px)
-- `SIT_ACTION_INTERVAL`, `WALK_PROBABILITY`, `BLINK_INTERVAL`: ülés, séta, pislogás
+- `SIT_ACTION_INTERVAL`, `BLINK_INTERVAL`: ülés és pislogás
+- `WALK_PROBABILITY`, `STRETCH_PROBABILITY`, `YAWN_PROBABILITY`, `GROOM_PROBABILITY`:
+  egy ülés végén ilyen eséllyel indul sétálni, nyújtózik, ásít vagy mosakszik
+  (a maradék eséllyel tovább ül)
+- `GROOM_DURATION`: a mosakodás hossza
 - `SLEEP_AFTER`, `SLEEP_DURATION`: ennyi kurzor nélküli ébrenlét után alszik el, és ennyi ideig alszik
 - `WALK_DISTANCE`, `WALK_SPEED`, `CHASE_SPEED`: séta hossza és sebessége
 - `CURSOR_NEAR_RADIUS`, `REACT_COOLDOWN`: mikor számít közelinek a kurzor, és mennyi szünet van két reakció között
@@ -169,7 +175,7 @@ A sprite sheet az `assets/sprites/generate_sprites.py` futtatásával generálha
 | `katzenmaster/config.py` | Konstansok |
 | `katzenmaster/sprites.py` | `sprites.json` értelmezése; `SpriteSheet`: vágás, nearest-neighbor nagyítás, tükrözés (csak `QImage`) |
 | `katzenmaster/animation.py` | Képkocka-időzítés, ismétlődő és egyszer lefutó animációk (tiszta Python) |
-| `katzenmaster/brain.py` | Állapotgép (`SIT`, `BLINK`, `WALK`, `SLEEP`, `CHASE`), szélek kezelése, kurzorreakció, talajpozíció (tiszta Python) |
+| `katzenmaster/brain.py` | Állapotgép (`SIT`, `BLINK`, `WALK`, `SLEEP`, `CHASE`, `STRETCH`, `YAWN`, `GROOM`), szélek kezelése, kurzorreakció, talajpozíció (tiszta Python) |
 | `katzenmaster/window.py` | Átlátszó, átkattintható, mindig felül lévő ablak |
 | `katzenmaster/tray.py` | Tálcaikon |
 | `katzenmaster/app.py` | Az elemek összekötése |

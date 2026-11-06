@@ -21,6 +21,9 @@ class State(Enum):
     WALK = "walk"
     SLEEP = "sleep"
     CHASE = "chase"  # walking towards the cursor
+    STRETCH = "stretch"
+    YAWN = "yawn"
+    GROOM = "groom"
 
 
 ANIMATION_FOR_STATE = {
@@ -29,7 +32,16 @@ ANIMATION_FOR_STATE = {
     State.WALK: "walk",
     State.SLEEP: "sleep",
     State.CHASE: "walk",
+    State.STRETCH: "stretch",
+    State.YAWN: "yawn",
+    State.GROOM: "groom",
 }
+
+# side-view animations; drawn facing right in the sheet, mirrored when facing left
+DIRECTIONAL_ANIMATIONS = frozenset({"walk", "stretch"})
+
+# states in which the cat sits and notices the cursor
+IDLE_STATES = frozenset({State.SIT, State.BLINK, State.GROOM})
 
 RIGHT, LEFT = 1, -1
 
@@ -75,6 +87,7 @@ class CatBrain:
         self.walk_remaining = 0.0
         self.chase_target = self.x
         self.chase_time = 0.0
+        self.groom_timer = 0.0
         self.cooldown = 0.0
         self._reset_awake()
         self._enter_sit()
@@ -104,6 +117,35 @@ class CatBrain:
     def _enter_sleep(self) -> None:
         self.sleep_timer = self._uniform(self.cfg.SLEEP_DURATION)
         self._set_state(State.SLEEP)
+
+    def _enter_stretch(self) -> None:
+        self.facing = self.rng.choice((LEFT, RIGHT))
+        self._set_state(State.STRETCH)
+
+    def _enter_yawn(self) -> None:
+        self._set_state(State.YAWN)
+
+    def _enter_groom(self) -> None:
+        self.groom_timer = self._uniform(self.cfg.GROOM_DURATION)
+        self._set_state(State.GROOM)
+
+    def _choose_action(self) -> None:
+        """A sit interval is over: pick what to do next."""
+        if self.awake >= self.sleep_threshold:
+            self._enter_yawn()  # a sleepy cat yawns first, then falls asleep
+            return
+        r = self.rng.random()
+        for probability, enter in (
+            (self.cfg.WALK_PROBABILITY, self._enter_walk),
+            (self.cfg.STRETCH_PROBABILITY, self._enter_stretch),
+            (self.cfg.YAWN_PROBABILITY, self._enter_yawn),
+            (self.cfg.GROOM_PROBABILITY, self._enter_groom),
+        ):
+            if r < probability:
+                enter()
+                return
+            r -= probability
+        self.action_timer = self._uniform(self.cfg.SIT_ACTION_INTERVAL)  # keep sitting
 
     def _enter_chase(self, cursor_x: float) -> None:
         self.chase_target = self._target_for_cursor(cursor_x)
@@ -141,6 +183,8 @@ class CatBrain:
             self._enter_sit()
         elif state is State.SLEEP:
             self._enter_sleep()
+        elif state is State.GROOM:
+            self._enter_groom()
         elif state is State.WALK:
             self.walk_remaining = float("inf")
             self._set_state(State.WALK)
@@ -161,8 +205,8 @@ class CatBrain:
 
     @property
     def mirrored(self) -> bool:
-        """Only the walk animation is directional; it faces right in the sheet."""
-        return self.animation == "walk" and self.facing == LEFT
+        """Only the side-view animations are directional; they face right in the sheet."""
+        return self.animation in DIRECTIONAL_ANIMATIONS and self.facing == LEFT
 
     @property
     def position(self) -> tuple[int, int]:
@@ -182,14 +226,20 @@ class CatBrain:
                 self._reset_awake()
                 self._enter_sit()
             elif self.sleep_timer <= 0:
+                # woke up on its own: a good stretch first
                 self._reset_awake()
-                self._enter_sit()
+                self._enter_stretch()
             return
 
         self.awake += dt
-        if self.state in (State.SIT, State.BLINK):
+        if self.state in IDLE_STATES:
             if near and self.cooldown <= 0:
                 self._react_to_cursor(cursor[0])
+                return
+            if self.state is State.GROOM:
+                self.groom_timer -= dt
+                if self.groom_timer <= 0:
+                    self._enter_sit()
                 return
             if self.state is State.BLINK:
                 if self.animator.finished:
@@ -199,15 +249,22 @@ class CatBrain:
             self.action_timer -= dt
             self.blink_timer -= dt
             if self.action_timer <= 0:
-                if self.awake >= self.sleep_threshold:
-                    self._enter_sleep()
-                elif self.rng.random() < self.cfg.WALK_PROBABILITY:
-                    self._enter_walk()
-                else:
-                    self.action_timer = self._uniform(self.cfg.SIT_ACTION_INTERVAL)
+                self._choose_action()
             elif self.blink_timer <= 0:
                 self.blink_timer = self._uniform(self.cfg.BLINK_INTERVAL)
                 self._set_state(State.BLINK)
+
+        elif self.state is State.STRETCH:
+            # too busy stretching to notice the cursor; reacts once it sits again
+            if self.animator.finished:
+                self._enter_sit()
+
+        elif self.state is State.YAWN:
+            if self.animator.finished:
+                if self.awake >= self.sleep_threshold:
+                    self._enter_sleep()
+                else:
+                    self._enter_sit()
 
         elif self.state is State.WALK:
             step = self.cfg.WALK_SPEED * dt

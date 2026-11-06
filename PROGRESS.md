@@ -47,6 +47,13 @@
 - [x] README (telepítés, indítás, ismert korlátok)
 - [x] MANUAL_CHECKS.md (Windows + Linux külön)
 
+### 3b. Új tevékenységek (harmadik kör)
+- [x] `stretch` (nyújtózás): oldalnézet, egyszer lejátszva, helyben; jobbra néz, balra tükrözve; természetes ébredés után mindig
+- [x] `yawn` (ásítás): elölnézet, egyszer lejátszva; elalvás előtt mindig
+- [x] `groom` (mosakodás): elölnézet, mancsnyalogatás, ismétlődő, `GROOM_DURATION` ideig; a kurzor megszakítja
+- [x] Esélyek és időtartam a `config.py`-ban (`STRETCH_/YAWN_/GROOM_PROBABILITY`, `GROOM_DURATION`)
+- [x] Snapshot, tesztek, README, MANUAL_CHECKS frissítve
+
 ### 7. Futtatható állomány (második kör)
 - [x] Egyfájlos build PyInstallerrel: `packaging/build.py` + `packaging/katzenmaster.spec`
 - [x] Fagyasztott futás: assetek a bundle-ből (`config.assets_dir()`); konzol nélküli módban a napló `%TEMP%/katzenmaster.log`-ba megy
@@ -69,3 +76,4 @@
 - **#8** Átnevezés: a projekt neve mindenhol `katzenmaster`. Érintett: a csomag (`katzenmaster/`, `python -m katzenmaster`), a `pyproject.toml`, az ablakcím, a tálcaikon felirata, a naplófájl (`%TEMP%/katzenmaster.log`), a `.spec`, az exe és a CI-artifactok (`katzenmaster-windows-x86_64.exe`, `katzenmaster-linux-x86_64.tar.gz`), valamint a dokumentáció. 76 teszt zöld, a snapshot változatlan, a helyi Linux-build és a smoke test rendben.
 - **#9** Méretcsökkentés. A szűrési szabály külön modulba került (`packaging/bundle_filter.py`), 50 teszt ellenőrzi, mi marad bent és mi esik ki. Kiesik: fordítások, képformátum- és ikonmotor-pluginok, QtSvg, a nem használt platform pluginok (csak windows/xcb/wayland/offscreen marad), Windowson az `opengl32sw.dll` (szoftveres OpenGL, 7,7 MB tömörítve) és a `d3dcompiler`, valamint a `_hashlib`/`_ssl` (velük a `libcrypto`). Linuxon strip. Linux: 57,2 → 50,8 MB; X11 (Xvfb) és Wayland (weston) alatt futtatva rendben. A legnagyobb maradék tétel az ICU-adat (12,3 MB tömörítve), ezt a QtCore Linuxon kötelezően használja. UPX-et szándékosan nem használunk (vírusirtós hamis riasztások, Qt-pluginok sérülhetnek). 126 teszt zöld.
 - **#10** CI (`build` #4) zöld, a smoke test mindkét platformon lefutott (37 PNG). Windows-exe: 37,0 → 23,7 MB. Linux tar.gz (CI, Python 3.12): 64,6 → 46,3 MB.
+- **#11** Új tevékenységek: nyújtózás, ásítás, mosakodás. A sprite sheet három új sort kapott (`stretch` 6 kocka, `yawn` 6, `groom` 4; a lap továbbra is 6 oszlopos). Az ásítás és a mosakodás az ülő macska rajzát használja (nyitott száj nyelvvel, illetve felemelt mancs). A nyújtózás „meghajlás”: a mellkas lesüllyed, a mellső lábak előrenyúlnak, a farok felemelkedik. A nyújtózás oldalnézetes, ezért a sétához hasonlóan tükrözzük. Az első rajzon a mély fázisban egy függőleges rózsaszín csík látszott: a fél pixelre eltolt fül-háromszög a kerekítés miatt elfajult. A javítás után a fej egész pixellel tolódik. Az állapotgépben egy ülés végén súlyozott választás dönt: séta, nyújtózás, ásítás, mosakodás vagy további ülés. Elalvás előtt a macska mindig ásít. Ha magától ébred, nyújtózik; ha a kurzor ébreszti, csak felül. Mosakodás közben reagál a kurzorra, nyújtózás és ásítás közben csak utána. A snapshot-szimuláció 6 percre nőtt, hogy a természetes ébredés is benne legyen. A kurzoros forgatókönyv most az első ülő pillanatot várja meg, mert sétálás közben a macska nem reagál. 146 teszt zöld, a snapshot képeit megnéztem.

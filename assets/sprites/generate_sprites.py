@@ -2,8 +2,9 @@
 
 Run from anywhere:  python assets/sprites/generate_sprites.py
 
-Layout: 32x32 cells, one animation per row (sit, blink, sleep, walk).
-The walk animation faces RIGHT; the app mirrors it for walking left.
+Layout: 32x32 cells, one animation per row (sit, blink, sleep, walk, stretch, yawn,
+groom). The side-view animations (walk, stretch) face RIGHT; the app mirrors them
+for facing left.
 Only PySide6 (QImage) is used to write the PNG.
 """
 
@@ -33,7 +34,13 @@ ANIMATIONS = [
     ("blink", 4, 12, False),
     ("sleep", 4, 2, True),
     ("walk", 6, 10, True),
+    ("stretch", 6, 4, False),
+    ("yawn", 6, 5, False),
+    ("groom", 4, 4, True),
 ]
+
+# animations drawn facing right (mirrored by the app when the cat faces left)
+FACES_RIGHT = ("walk", "stretch")
 
 
 class Grid:
@@ -109,7 +116,8 @@ class Grid:
 # sitting cat (front view) -- used by "sit" and "blink"
 # --------------------------------------------------------------------------
 
-def sitting_cat(tail_phase: int, eyes: str) -> Grid:
+def sitting_cat(tail_phase: int, eyes: str, mouth: str = "closed", paw: int | None = None) -> Grid:
+    """Front view. ``mouth``: closed / small / wide; ``paw``: lick phase of the raised paw."""
     g = Grid()
     # tail on the ground, curling up at the tip (drawn first, behind the body)
     tips = [(27, 22), (28, 23), (28, 25), (27, 24)]
@@ -123,7 +131,8 @@ def sitting_cat(tail_phase: int, eyes: str) -> Grid:
     # chest
     g.ellipse(15.5, 23.5, 3.0, 4.0, "w")
     # front paws
-    g.rect(11, 29, 13, 30, "w")
+    if paw is None:
+        g.rect(11, 29, 13, 30, "w")
     g.rect(18, 29, 20, 30, "w")
     # ears
     g.triangle((8, 13), (9, 4), (14, 9), "b")
@@ -148,7 +157,8 @@ def sitting_cat(tail_phase: int, eyes: str) -> Grid:
         g.set(21, y, "s")
         g.set(22, y, "s")
     # paw split
-    g.set(12, 30, "o")
+    if paw is None:
+        g.set(12, 30, "o")
     g.set(19, 30, "o")
     # eyes
     for ex in (11, 19):
@@ -164,11 +174,45 @@ def sitting_cat(tail_phase: int, eyes: str) -> Grid:
     # nose + mouth
     g.set(15, 16, "p")
     g.set(16, 16, "p")
-    g.set(15, 17, "o")
-    g.set(16, 17, "o")
-    g.set(14, 18, "o")
-    g.set(17, 18, "o")
+    if mouth == "small":
+        g.draw_text(["oooo", "oeeo", ".oo."], 14, 17)
+    elif mouth == "wide":
+        g.draw_text(["oooooo", "oheeho", "oeppeo", "ooppoo", "..oo.."], 13, 17)
+    else:
+        g.set(15, 17, "o")
+        g.set(16, 17, "o")
+        g.set(14, 18, "o")
+        g.set(17, 18, "o")
+    if paw is not None:
+        _raised_paw(g, paw)
     return g
+
+
+def _raised_paw(g: Grid, phase: int) -> None:
+    """Left front paw lifted to the mouth; ``phase`` alternates the licking stroke."""
+    up = phase % 2
+    # foreleg from the chest up to the face, outlined by hand (it overlaps the body)
+    g.draw_text(
+        [
+            "..ooo",
+            ".owwwo",
+            ".owwwo",
+            "obbbo",
+            "obbbo",
+            "obbbo",
+            "obbbo",
+            "obbbo",
+            "obbbo",
+            "obbbo",
+            "obbbo",
+            ".ooo",
+        ],
+        10, 15 - up,
+    )
+    # tongue reaching out to the paw
+    if up == 0:
+        g.set(15, 18, "p")
+        g.set(15, 19, "p")
 
 
 # --------------------------------------------------------------------------
@@ -270,12 +314,79 @@ def walking_cat(frame: int, frames: int) -> Grid:
     return g
 
 
+# --------------------------------------------------------------------------
+# stretching cat (side view, facing right): a "play bow"
+# --------------------------------------------------------------------------
+
+def stretching_cat(t: float, eyes: str) -> Grid:
+    """``t`` = 0 standing, 1 full bow (chest down, front legs forward, rear up)."""
+    g = Grid()
+    hy = 0 if t < 0.5 else -1  # hips rise a little
+    cy = 21.5 + 3.5 * t  # chest sinks
+    ox, oy = 0, round(4 * t)  # head offset (integer, keeps the small triangles intact)
+    hx, hcy = 23.5 + ox, 16.0 + oy
+    paw_x = round(20 + 7 * t)  # front paws reach forward
+    # far legs (darker)
+    g.rect(8, 24, 9, 30, "s")
+    g.line(17, cy + 2, paw_x - 2, 29, "s", width=2)
+    g.rect(paw_x - 2, 30, paw_x - 1, 30, "s")
+    # tail, raised higher in the bow
+    tip = round(11 - 4 * t)
+    g.line(6, 20 + hy, 3, 16 + hy, "b", width=2)
+    g.line(3, 16 + hy, 4, tip, "b", width=2)
+    g.rect(4, tip - 1, 5, tip, "s")
+    # body: from the hips to the (sinking) chest
+    for i in range(9):
+        k = i / 8
+        g.ellipse(9.0 + 8.0 * k, 20.5 + hy + (cy - 20.5 - hy) * k, 4.4, 4.4, "b")
+    g.ellipse(13.5, 23.5 + hy + 2 * t, 4.5, 1.3, "w")
+    # near legs
+    g.rect(10, 24, 11, 29, "b")
+    g.rect(10, 30, 11, 30, "w")
+    g.line(19, cy + 2, paw_x, 29, "b", width=2)
+    g.rect(paw_x, 30, paw_x + 1, 30, "w")
+    # ears and head (same shapes as the walking cat, shifted)
+
+    def p(x, y):
+        return (x + ox, y + oy)
+
+    g.triangle(p(19, 13), p(20, 6), p(24, 11), "b")
+    g.triangle(p(24, 11), p(27, 6), p(28, 13), "b")
+    g.ellipse(hx, hcy, 5.4, 4.8, "b")
+    g.triangle(p(21, 11), p(21, 9), p(22, 11), "p")
+    g.triangle(p(26, 11), p(26, 9), p(27, 11), "p")
+    g.ellipse(hx + 3.5, hcy + 2.0, 2.2, 1.6, "w")
+    g.outline()
+    # stripes along the back
+    for x in (10, 13, 16):
+        y = round(17.5 + hy + (cy - 21.5 - hy) * (x - 9) / 8)
+        g.set(x, y, "s")
+        g.set(x, y + 1, "s")
+    ex, ey = p(25, 14)
+    if eyes == "open":
+        g.rect(ex, ey, ex + 1, ey + 1, "e")
+        g.set(ex + 1, ey, "h")
+    else:
+        g.rect(ex, ey + 1, ex + 1, ey + 1, "o")
+    nx, ny = p(29, 17)
+    g.set(nx, ny, "p")
+    g.set(nx - 1, ny + 2, "o")
+    return g
+
+
 def build_frames() -> dict[str, list[Grid]]:
     frames: dict[str, list[Grid]] = {}
     frames["sit"] = [sitting_cat(i, "open") for i in range(4)]
     frames["blink"] = [sitting_cat(0, e) for e in ("half", "closed", "closed", "half")]
     frames["sleep"] = [sleeping_cat(i) for i in range(4)]
     frames["walk"] = [walking_cat(i, 6) for i in range(6)]
+    frames["stretch"] = [stretching_cat(t, e) for t, e in
+                         ((0.0, "open"), (0.5, "open"), (1.0, "closed"), (1.0, "closed"),
+                          (0.5, "open"), (0.0, "open"))]
+    frames["yawn"] = [sitting_cat(0, e, m) for e, m in
+                      (("half", "small"), ("closed", "wide"), ("closed", "wide"),
+                       ("closed", "wide"), ("closed", "small"), ("half", "closed"))]
+    frames["groom"] = [sitting_cat(0, "closed", paw=i) for i in range(4)]
     return frames
 
 
@@ -297,7 +408,8 @@ def main(out_dir: Path | None = None) -> None:
                     if key is not None:
                         img.setPixelColor(col * CELL + x, row * CELL + y, QColor(*PALETTE[key]))
         meta["animations"][name] = {"row": row, "frames": count, "fps": fps, "loop": loop}
-    meta["animations"]["walk"]["faces"] = "right"
+    for name in FACES_RIGHT:
+        meta["animations"][name]["faces"] = "right"
     if not img.save(str(out_dir / "sprites.png")):
         raise SystemExit("failed to write sprites.png")
     (out_dir / "sprites.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
